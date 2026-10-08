@@ -202,7 +202,7 @@ public partial class MainWindow : Window
         CatImage.ReleaseMouseCapture();
 
         if (_engine.State == BuddyState.Dragged)
-            Drop();
+            DropCat();
         else
             _engine.Pet();
         e.Handled = true;
@@ -215,10 +215,10 @@ public partial class MainWindow : Window
             return;
         _pressed = false;
         if (_engine.State == BuddyState.Dragged)
-            Drop();
+            DropCat();
     }
 
-    private void Drop()
+    private void DropCat()
     {
         _engine.EndDrag();
         Native.GetWindowRect(_hwnd, out var me);
