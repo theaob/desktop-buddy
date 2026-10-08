@@ -1,0 +1,31 @@
+<Window x:Class="DesktopBuddy.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Desktop Buddy"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight">
+    <!-- Transparent pixels of a layered window are click-through, so only the cat itself takes clicks. -->
+    <Image x:Name="CatImage"
+           Width="48" Height="36"
+           Stretch="Fill"
+           RenderOptions.BitmapScalingMode="NearestNeighbor"
+           RenderTransformOrigin="0.5,0.5">
+        <Image.RenderTransform>
+            <ScaleTransform x:Name="Flip" ScaleX="1" />
+        </Image.RenderTransform>
+        <Image.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Diagnostics..." Click="OnDiagnostics" />
+                <MenuItem x:Name="PauseItem" Header="Pause walking" IsCheckable="True" />
+                <Separator />
+                <MenuItem Header="Exit" Click="OnExit" />
+            </ContextMenu>
+        </Image.ContextMenu>
+    </Image>
+</Window>
