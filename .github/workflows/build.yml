@@ -15,6 +15,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Run unit tests
+        run: dotnet test tests/DesktopBuddy.Core.Tests/DesktopBuddy.Core.Tests.csproj -c Release
+
       - name: Publish self-contained exe
         run: dotnet publish src/DesktopBuddy/DesktopBuddy.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
 

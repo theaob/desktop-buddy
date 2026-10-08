@@ -39,8 +39,8 @@ internal sealed class DiagnosticsWindow : Window
         var openLog = new Button { Content = "Open log folder", Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(4, 0, 8, 8) };
         openLog.Click += (_, _) =>
         {
-            Directory.CreateDirectory(SpikeLog.Folder);
-            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{SpikeLog.Folder}\"") { UseShellExecute = true });
+            Directory.CreateDirectory(BuddyLog.Folder);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{BuddyLog.Folder}\"") { UseShellExecute = true });
         };
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };

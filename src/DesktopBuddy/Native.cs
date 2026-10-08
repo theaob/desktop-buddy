@@ -37,6 +37,19 @@ internal static class Native
         public uint dwFlags;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int X, Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct LASTINPUTINFO
+    {
+        public uint cbSize;
+        public uint dwTime;
+    }
+
     public const uint ABM_GETSTATE = 0x4;
     public const uint ABM_GETTASKBARPOS = 0x5;
     public const uint ABS_AUTOHIDE = 0x1;
@@ -112,6 +125,28 @@ internal static class Native
 
     [DllImport("user32.dll")]
     public static extern int GetSystemMetrics(int index);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetCursorPos(out POINT point);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool DestroyIcon(IntPtr hIcon);
+
+    /// <summary>Seconds since the last keyboard or mouse input anywhere on the PC.</summary>
+    public static double UserIdleSeconds()
+    {
+        var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+        if (!GetLastInputInfo(ref info))
+            return 0;
+        // Both are milliseconds since boot as 32-bit counters; unsigned subtraction survives wraparound.
+        return unchecked((uint)Environment.TickCount - info.dwTime) / 1000.0;
+    }
 
     public static RECT? MonitorBounds(IntPtr monitor)
     {

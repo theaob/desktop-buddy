@@ -9,7 +9,7 @@ Gate to phase 1: every row below that applies to your setup passes.
 2. Unzip it and run `DesktopBuddy.exe`. It is unsigned, so Windows SmartScreen may warn: choose **More info**, then **Run anyway**.
 3. Right-click the cat for **Diagnostics...**, **Pause walking** and **Exit**.
 
-The app logs every change it sees to `%LOCALAPPDATA%\DesktopBuddy\spike.log`. When a row fails, copy the diagnostics text (or attach the log) to the PR.
+The app logs every change it sees to `%LOCALAPPDATA%\DesktopBuddy\buddy.log`. When a row fails, copy the diagnostics text (or attach the log) to the PR.
 
 ## Test matrix
 

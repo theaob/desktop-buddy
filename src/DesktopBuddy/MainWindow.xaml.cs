@@ -1,41 +1,57 @@
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using DesktopBuddy.Core;
 
 namespace DesktopBuddy;
 
 /// <summary>
-/// Phase 0 spike: a transparent, topmost window that stands on the taskbar and walks along it.
-/// All placement is done in physical pixels with SetWindowPos, so DPI scaling can't skew it.
+/// The cat: a transparent, topmost window that stands on the taskbar. The behaviour engine decides
+/// what it does; this window draws it and moves it. Placement uses SetWindowPos in physical pixels,
+/// so DPI scaling can't skew it.
 /// </summary>
 public partial class MainWindow : Window
 {
     private const int FrameMs = 66;                 // ~15 fps keeps CPU low
     private const int EnvironmentEveryNFrames = 4;  // re-read taskbar and fullscreen state ~4x a second
-    private const double WalkSpeedDip = 1.5;        // DIPs per frame, scaled to pixels by the monitor DPI
+    private const int DragThresholdPx = 4;          // smaller movements count as a click
+    private const double GravityDip = 1.2;          // DIPs per frame, added to the fall speed each frame
 
+    private readonly BuddySettings _settings;
+    private readonly BehaviorEngine _engine = new();
     private readonly DispatcherTimer _timer = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(FrameMs) };
-    private readonly Random _random = new();
+    private readonly Stopwatch _clock = Stopwatch.StartNew();
 
     private IntPtr _hwnd;
     private int _frame;
+    private double _lastTickSeconds;
     private TaskbarInfo? _taskbar;
     private string? _hideReason;
     private double _walkOffset = double.NaN;  // physical px from the left end of the walk zone
     private int _direction = 1;
-    private bool _sitting;
-    private DateTime _nextMoodChange = DateTime.Now;
     private string _lastLoggedState = "";
     private DiagnosticsWindow? _diagnostics;
 
-    public MainWindow()
+    private bool _pressed;
+    private Native.POINT _pressPoint;
+    private Native.POINT _grabOffset;  // cursor position inside the window when the press began
+    private double _fallY;
+    private double _fallSpeed;
+
+    public MainWindow(BuddySettings settings)
     {
+        _settings = settings;
         InitializeComponent();
         CatImage.Source = CatSprite.Frame(CatPose.Sit);
         SourceInitialized += OnSourceInitialized;
         _timer.Tick += OnTick;
     }
+
+    /// <summary>Hidden from the tray menu; separate from hiding for fullscreen apps.</summary>
+    internal bool UserHidden { get; set; }
 
     internal string Diagnostics { get; private set; } = "";
 
@@ -48,17 +64,22 @@ public partial class MainWindow : Window
         ex = (ex | Native.WS_EX_TOOLWINDOW | Native.WS_EX_NOACTIVATE) & ~Native.WS_EX_APPWINDOW;
         Native.SetWindowLong(_hwnd, Native.GWL_EXSTYLE, ex);
 
-        SpikeLog.Write($"Started. Windows {Environment.OSVersion.Version}, monitors: {Native.GetSystemMetrics(Native.SM_CMONITORS)}");
+        BuddyLog.Write($"Started. Windows {Environment.OSVersion.Version}, monitors: {Native.GetSystemMetrics(Native.SM_CMONITORS)}");
         RefreshEnvironment();
         _timer.Start();
     }
 
     private void OnTick(object? sender, EventArgs e)
     {
+        double now = _clock.Elapsed.TotalSeconds;
+        double elapsed = Math.Min(now - _lastTickSeconds, 0.5);  // a long stall shouldn't fast-forward the cat
+        _lastTickSeconds = now;
+
         if (_frame++ % EnvironmentEveryNFrames == 0)
             RefreshEnvironment();
 
-        if (_hideReason != null)
+        bool held = _engine.State == BuddyState.Dragged;
+        if ((UserHidden || _hideReason != null) && !held)
         {
             if (Visibility == Visibility.Visible)
                 Visibility = Visibility.Hidden;
@@ -67,33 +88,25 @@ public partial class MainWindow : Window
         if (Visibility != Visibility.Visible)
             Visibility = Visibility.Visible;
 
-        bool walking = UpdateMood();
-        Place(walking);
-    }
+        _engine.NapAfterSeconds = _settings.NapAfterMinutes * 60;
+        _engine.WalkingAllowed = !_settings.Paused && IsHorizontalTaskbar;
+        _engine.Tick(elapsed, Native.UserIdleSeconds());
 
-    /// <returns>True when the cat should be walking this frame.</returns>
-    private bool UpdateMood()
-    {
-        if (DateTime.Now >= _nextMoodChange)
-        {
-            _sitting = _random.NextDouble() < 0.3;
-            _nextMoodChange = DateTime.Now.AddSeconds(_sitting ? _random.Next(3, 8) : _random.Next(4, 12));
-        }
-
-        bool horizontal = _taskbar is null || _taskbar.Edge is TaskbarEdge.Bottom or TaskbarEdge.Top;
-        bool walking = horizontal && !_sitting && !PauseItem.IsChecked;
-
-        var pose = walking ? ((_frame / 3) % 2 == 0 ? CatPose.WalkA : CatPose.WalkB) : CatPose.Sit;
-        CatImage.Source = CatSprite.Frame(pose);
+        CatImage.Source = CatSprite.Frame(CatAnimation.PoseFor(_engine.State, _engine.TimeInState));
         Flip.ScaleX = _direction;
-        return walking;
+        Move();
     }
 
-    private void Place(bool walking)
+    private bool IsHorizontalTaskbar => _taskbar is null || _taskbar.Edge is TaskbarEdge.Bottom or TaskbarEdge.Top;
+
+    private void Move()
     {
+        if (_engine.State == BuddyState.Dragged)
+            return;  // follows the mouse instead
         if (!Native.GetWindowRect(_hwnd, out var me))
             return;
 
+        double scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
         var zone = WalkZone(me.Width, me.Height);
         int x = zone.Left, y = zone.Y;
 
@@ -103,16 +116,26 @@ public partial class MainWindow : Window
             if (double.IsNaN(_walkOffset))
                 _walkOffset = span * 0.5;
 
-            if (walking)
+            if (_engine.State == BuddyState.Walk)
             {
-                double scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
-                _walkOffset += _direction * WalkSpeedDip * scale;
+                _walkOffset += _direction * _settings.WalkSpeed * scale;
                 if (_walkOffset <= 0) { _walkOffset = 0; _direction = 1; }
                 else if (_walkOffset >= span) { _walkOffset = span; _direction = -1; }
             }
 
             _walkOffset = Math.Clamp(_walkOffset, 0, span);
             x = zone.Left + (int)_walkOffset;
+        }
+
+        if (_engine.State == BuddyState.Falling)
+        {
+            _fallSpeed += GravityDip * scale;
+            _fallY += _fallSpeed;
+            // Dropped below its spot (say, onto the taskbar)? It hops back up, which also counts as landing.
+            if (_fallY >= y || !zone.Horizontal)
+                _engine.Landed();
+            else
+                y = (int)_fallY;
         }
 
         if (x != me.Left || y != me.Top)
@@ -142,6 +165,71 @@ public partial class MainWindow : Window
         };
     }
 
+    // ---- Click to pet, drag to move ----
+
+    private void OnCatMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        Native.GetCursorPos(out _pressPoint);
+        Native.GetWindowRect(_hwnd, out var me);
+        _grabOffset = new Native.POINT { X = _pressPoint.X - me.Left, Y = _pressPoint.Y - me.Top };
+        _pressed = true;
+        CatImage.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void OnCatMouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_pressed)
+            return;
+
+        Native.GetCursorPos(out var p);
+        if (_engine.State != BuddyState.Dragged)
+        {
+            if (Math.Abs(p.X - _pressPoint.X) < DragThresholdPx && Math.Abs(p.Y - _pressPoint.Y) < DragThresholdPx)
+                return;
+            _engine.BeginDrag();
+        }
+
+        Native.SetWindowPos(_hwnd, Native.HWND_TOPMOST, p.X - _grabOffset.X, p.Y - _grabOffset.Y, 0, 0,
+            Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
+    }
+
+    private void OnCatMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_pressed)
+            return;
+        _pressed = false;
+        CatImage.ReleaseMouseCapture();
+
+        if (_engine.State == BuddyState.Dragged)
+            Drop();
+        else
+            _engine.Pet();
+        e.Handled = true;
+    }
+
+    private void OnCatLostCapture(object sender, MouseEventArgs e)
+    {
+        // Capture can be taken away mid-drag (Alt+Tab, a UAC prompt); drop the cat where it is.
+        if (!_pressed)
+            return;
+        _pressed = false;
+        if (_engine.State == BuddyState.Dragged)
+            Drop();
+    }
+
+    private void Drop()
+    {
+        _engine.EndDrag();
+        Native.GetWindowRect(_hwnd, out var me);
+        var zone = WalkZone(me.Width, me.Height);
+        _walkOffset = me.Left - zone.Left;  // walk on from wherever it was dropped
+        _fallY = me.Top;
+        _fallSpeed = 0;
+    }
+
+    // ---- Environment and diagnostics ----
+
     private void RefreshEnvironment()
     {
         _taskbar = TaskbarTracker.Query();
@@ -157,11 +245,13 @@ public partial class MainWindow : Window
 
         if (state != _lastLoggedState)
         {
-            SpikeLog.Write(state);
+            BuddyLog.Write(state);
             _lastLoggedState = state;
         }
 
         Diagnostics = string.Join(Environment.NewLine,
+            $"Buddy state:     {_engine.State}{(UserHidden ? " (hidden by you)" : "")}",
+            $"You idle for:    {Native.UserIdleSeconds():0} s (naps after {_settings.NapAfterMinutes} min)",
             $"Taskbar edge:    {(_taskbar?.Edge.ToString() ?? "not found")}",
             $"Auto-hide:       {YesNo(_taskbar?.AutoHide)}",
             $"Taskbar showing: {YesNo(_taskbar?.IsVisible)}",
@@ -173,14 +263,14 @@ public partial class MainWindow : Window
             $"Monitors:        {Native.GetSystemMetrics(Native.SM_CMONITORS)}",
             $"Hiding because:  {_hideReason ?? "nothing"}",
             $"Windows:         {Environment.OSVersion.Version}",
-            $"Log file:        {SpikeLog.FilePath}");
+            $"Log file:        {BuddyLog.FilePath}");
 
         _diagnostics?.Refresh(Diagnostics);
     }
 
     private static string YesNo(bool? value) => value switch { true => "yes", false => "no", null => "?" };
 
-    private void OnDiagnostics(object sender, RoutedEventArgs e)
+    internal void ShowDiagnostics()
     {
         if (_diagnostics is null)
         {
@@ -192,9 +282,23 @@ public partial class MainWindow : Window
         _diagnostics.Activate();
     }
 
-    private void OnExit(object sender, RoutedEventArgs e)
+    // ---- Right-click menu ----
+
+    private static App CurrentApp => (App)Application.Current;
+
+    private void OnMenuOpened(object sender, RoutedEventArgs e) => PauseItem.IsChecked = _settings.Paused;
+
+    private void OnSettings(object sender, RoutedEventArgs e) => CurrentApp.ShowSettings();
+
+    private void OnPause(object sender, RoutedEventArgs e)
     {
-        SpikeLog.Write("Exited.");
-        Close();
+        _settings.Paused = PauseItem.IsChecked;
+        CurrentApp.SaveSettings();
     }
+
+    private void OnHide(object sender, RoutedEventArgs e) => UserHidden = true;
+
+    private void OnDiagnostics(object sender, RoutedEventArgs e) => ShowDiagnostics();
+
+    private void OnExit(object sender, RoutedEventArgs e) => CurrentApp.Quit();
 }
