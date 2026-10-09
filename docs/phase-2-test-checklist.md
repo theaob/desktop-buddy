@@ -17,6 +17,7 @@ Get the build the same way as before: download the `DesktopBuddy-win-x64` artifa
 | 8 | Grab the cat low on its body and drag | You hold it under the belly, legs and tail dangling | |
 | 8a | Drag the cat up high and let go | It flails its legs on the way down, squashes for a moment on landing, then sits | |
 | 8b | Leave the PC until the cat naps, then move the mouse | It wakes slowly: a drowsy blink, a long stretch, a yawn, then it sits | |
+| 8c | Watch the cat sit for a while | Now and then it dozes off sitting up, eyes shut, with a snot bubble swelling and shrinking at its nose; it also has one while napping, and the bubble pops when it wakes | |
 | 9 | Right-click the cat or the tray icon, Start focus timer | A bubble above the cat counts down; click the bubble to hide it. When it ends the cat hops with hearts and says well done | |
 | 10 | Start a focus timer, then Stop focus timer | The countdown disappears; the cat doesn't follow or hunt the mouse during a session | |
 | 11 | In Settings, set break reminders to 5 min and keep working | After 5 minutes of use a bubble suggests a break. Stepping away for 5 minutes resets the count | |

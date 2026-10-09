@@ -146,4 +146,41 @@ public class CatTests
                     Assert.Equal(0u, dry[i]);
         }
     }
+
+    [Fact]
+    public void Snot_bubble_swells_and_shrinks_while_asleep_and_pops_on_waking()
+    {
+        var sizes = Enumerable.Range(0, 16).Select(i => CatAnimation.SnotBubble(BuddyState.Nap, i * 0.45)).ToList();
+        Assert.Contains(3, sizes);
+        Assert.Contains(0, sizes);
+        Assert.Contains(3, Enumerable.Range(0, 16).Select(i => CatAnimation.SnotBubble(BuddyState.Doze, i * 0.45)));
+
+        Assert.Equal(CatPixels.BubblePop, CatAnimation.SnotBubble(BuddyState.WakeUp, 0.1));
+        Assert.Equal(0, CatAnimation.SnotBubble(BuddyState.WakeUp, 1));
+        Assert.Equal(0, CatAnimation.SnotBubble(BuddyState.Walk, 1));
+    }
+
+    [Theory]
+    [InlineData(CatPose.SitBlink)]
+    [InlineData(CatPose.NapA)]
+    [InlineData(CatPose.NapB)]
+    [InlineData(CatPose.Drowsy)]
+    public void Snot_bubble_sits_in_empty_space_beside_the_nose(CatPose pose)
+    {
+        var plain = CatPixels.Argb(pose);
+        foreach (int size in new[] { 1, 2, 3, CatPixels.BubblePop })
+        {
+            var bubbly = CatPixels.Argb(pose, bubble: size);
+            Assert.NotEqual(plain, bubbly);
+            for (int i = 0; i < plain.Length; i++)
+                if (plain[i] != bubbly[i])
+                    Assert.Equal(0u, plain[i]);
+        }
+    }
+
+    [Fact]
+    public void Open_eyed_poses_never_get_a_snot_bubble()
+    {
+        Assert.Equal(CatPixels.Argb(CatPose.WalkA), CatPixels.Argb(CatPose.WalkA, bubble: 3));
+    }
 }

@@ -22,6 +22,19 @@ public static class CatAnimation
     private const double DrowsyUntil = 0.9;
     private const double StretchUntil = 2.0;
 
+    // The snot bubble swells and shrinks with each slow breath, and pops as the cat wakes.
+    private static readonly int[] BubbleCycle = { 0, 1, 2, 3, 3, 2, 1, 0 };
+    private const double BubbleStepSeconds = 0.45;
+    private const double PopSeconds = 0.3;
+
+    /// <summary>Snot bubble size for this moment: 0 none, 1 to 3 growing, or <see cref="CatPixels.BubblePop"/> as it bursts.</summary>
+    public static int SnotBubble(BuddyState state, double secondsInState) => state switch
+    {
+        BuddyState.Nap or BuddyState.Doze => BubbleCycle[(int)(secondsInState / BubbleStepSeconds) % BubbleCycle.Length],
+        BuddyState.WakeUp when secondsInState < PopSeconds => CatPixels.BubblePop,
+        _ => 0,
+    };
+
     /// <summary>Which frame to show for a state that has lasted <paramref name="secondsInState"/>.</summary>
     /// <param name="moving">For following and playing: false while the cat stands still (under the mouse, or batting the ball).</param>
     /// <param name="grip">How a carried cat hangs.</param>
@@ -33,6 +46,7 @@ public static class CatAnimation
         BuddyState.Petted or BuddyState.Celebrate => Alternate(secondsInState * HeartBobsPerSecond, CatPose.PettedA, CatPose.PettedB),
         BuddyState.Scratch => Alternate(secondsInState * ScratchesPerSecond, CatPose.ScratchA, CatPose.ScratchB),
         BuddyState.Look => CatPose.LookUp,
+        BuddyState.Doze => CatPose.SitBlink,
         BuddyState.Follow => moving ? Steps(secondsInState) : Sitting(secondsInState),
         BuddyState.Play => moving ? Steps(secondsInState) : CatPose.Bat,
         BuddyState.Stalk => Alternate(secondsInState * WigglesPerSecond, CatPose.CrouchA, CatPose.CrouchB),

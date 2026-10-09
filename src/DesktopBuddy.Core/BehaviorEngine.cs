@@ -12,6 +12,7 @@ public enum BuddyState
     Celebrate,  // a focus session just ended
     WakeUp,     // slowly waking from a nap: blinks, stretches, yawns
     Landing,    // squashed for a moment after a drop or a pounce
+    Doze,       // a short snooze sitting up, snot bubble and all
 }
 
 /// <summary>Where the user grabbed the cat, which decides how it hangs while carried.</summary>
@@ -78,7 +79,7 @@ public sealed class BehaviorEngine
 
     /// <summary>States the cat picks for itself, which napping, hunting and pausing may interrupt.</summary>
     private bool IsIdleLife => State is BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch
-        or BuddyState.Look or BuddyState.Follow or BuddyState.Play;
+        or BuddyState.Look or BuddyState.Follow or BuddyState.Play or BuddyState.Doze;
 
     private bool IsMoving => State is BuddyState.Walk or BuddyState.Follow or BuddyState.Play;
 
@@ -160,11 +161,12 @@ public sealed class BehaviorEngine
     {
         double r = _random.NextDouble();
         if (!WalkingAllowed)
-            return r < 0.2 ? BuddyState.Scratch : BuddyState.Sit;
-        if (r < 0.45) return BuddyState.Walk;
-        if (r < 0.57) return BuddyState.Scratch;
-        if (r < 0.67 && PlayAllowed) return BuddyState.Play;
-        if (r < 0.77 && MouseGamesAllowed && CursorOnMonitor) return BuddyState.Follow;
+            return r < 0.2 ? BuddyState.Scratch : r < 0.35 ? BuddyState.Doze : BuddyState.Sit;
+        if (r < 0.42) return BuddyState.Walk;
+        if (r < 0.53) return BuddyState.Scratch;
+        if (r < 0.62) return BuddyState.Doze;
+        if (r < 0.71 && PlayAllowed) return BuddyState.Play;
+        if (r < 0.80 && MouseGamesAllowed && CursorOnMonitor) return BuddyState.Follow;
         return BuddyState.Sit;
     }
 
@@ -182,7 +184,7 @@ public sealed class BehaviorEngine
     /// </summary>
     public bool Notice()
     {
-        if (_lookCooldown > 0 || State is not (BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch or BuddyState.Follow))
+        if (_lookCooldown > 0 || State is not (BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch or BuddyState.Follow or BuddyState.Doze))
             return false;
         _lookCooldown = LookCooldownSeconds;
         Enter(BuddyState.Look);
@@ -228,6 +230,7 @@ public sealed class BehaviorEngine
             BuddyState.Sit => Between(3, 8),
             BuddyState.Follow => Between(6, 12),
             BuddyState.Play => Between(10, 20),
+            BuddyState.Doze => Between(8, 20),
             _ => 0,
         };
     }

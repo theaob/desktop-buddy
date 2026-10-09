@@ -264,4 +264,22 @@ public class BehaviorEngineTests
 
         Assert.Equal(grip, engine.Grip);
     }
+
+    [Fact]
+    public void Dozes_off_sometimes_then_carries_on()
+    {
+        var engine = NewEngine();
+        Assert.True(RunUntil(engine, BuddyState.Doze));
+        Assert.True(RunUntil(engine, BuddyState.Sit, 25));
+    }
+
+    [Fact]
+    public void A_window_event_startles_a_dozing_cat()
+    {
+        var engine = NewEngine();
+        RunUntil(engine, BuddyState.Doze);
+
+        Assert.True(engine.Notice());
+        Assert.Equal(BuddyState.Look, engine.State);
+    }
 }

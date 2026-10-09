@@ -158,7 +158,8 @@ public partial class MainWindow : Window
 
         bool sweaty = _settings.ReactToCpu && _cpu.Busy;
         var pose = CatAnimation.PoseFor(_engine.State, _engine.TimeInState, _moving, _engine.Grip);
-        CatImage.Source = CatSprite.Frame(pose, _settings.Look, sweaty);
+        int bubble = CatAnimation.SnotBubble(_engine.State, _engine.TimeInState);
+        CatImage.Source = CatSprite.Frame(pose, _settings.Look, sweaty, bubble);
         Flip.ScaleX = _direction;
 
         if (Native.GetWindowRect(_hwnd, out me))

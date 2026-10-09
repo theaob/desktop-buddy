@@ -12,7 +12,7 @@
         SizeToContent="WidthAndHeight">
     <!-- Transparent pixels of a layered window are click-through, so only the cat itself takes clicks. -->
     <Image x:Name="CatImage"
-           Width="48" Height="40"
+           Width="60" Height="40"
            Stretch="Fill"
            Cursor="Hand"
            ToolTip="Click to pet, drag to move"
