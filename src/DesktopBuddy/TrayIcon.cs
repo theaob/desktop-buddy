@@ -15,9 +15,11 @@ internal sealed class TrayIcon : IDisposable
     {
         var show = new Forms.ToolStripMenuItem("Hide buddy", null, (_, _) => app.ToggleBuddyHidden());
         var pause = new Forms.ToolStripMenuItem("Pause walking", null, (_, _) => app.TogglePaused());
+        var focus = new Forms.ToolStripMenuItem("Start focus timer", null, (_, _) => app.ToggleFocus());
         var startup = new Forms.ToolStripMenuItem("Start with Windows", null, (_, _) => StartupRegistration.Set(!StartupRegistration.IsEnabled()));
 
         var menu = new Forms.ContextMenuStrip();
+        menu.Items.Add(focus);
         menu.Items.Add(show);
         menu.Items.Add(pause);
         menu.Items.Add(startup);
@@ -30,6 +32,7 @@ internal sealed class TrayIcon : IDisposable
         {
             show.Text = app.Buddy?.UserHidden == true ? "Show buddy" : "Hide buddy";
             pause.Checked = app.Settings.Paused;
+            focus.Text = app.Buddy?.FocusMenuText ?? "Start focus timer";
             startup.Checked = StartupRegistration.IsEnabled();
         };
 
