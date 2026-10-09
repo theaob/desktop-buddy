@@ -1,91 +1,270 @@
 namespace DesktopBuddy.Core;
 
 /// <summary>
-/// The pixel cat, facing right, as 16x12 character grids.
-/// k = outline, o = fur, w = belly, e = eye, p = nose, h = heart, z = sleep mark, . = transparent.
+/// The pixel cat, facing right, as 24x20 character grids. Drawn for this project: a round-headed
+/// blue-grey cat with a cream chest, green eyes and a red collar with a gold bell.
+/// k = outline, f = fur, d = darker fur (stripes, tail tip), l = fur highlight, c = cream,
+/// p = pink (ears, nose), g = green eye, w = eye shine, r = collar, y = bell,
+/// h = heart, z = sleep mark, . = transparent.
 /// </summary>
 public static class CatPixels
 {
-    public const int Width = 16;
-    public const int Height = 12;
+    public const int Width = 24;
+    public const int Height = 20;
+
+    /// <summary>The tray icon is the cat's head and collar, cut from the sitting frame.</summary>
+    public const int IconSize = 16;
 
     /// <summary>ARGB colours for each pixel character; anything else is transparent.</summary>
     public static IReadOnlyDictionary<char, uint> Palette { get; } = new Dictionary<char, uint>
     {
-        ['k'] = 0xFF2B2B2B,
-        ['o'] = 0xFFF2A541,
-        ['w'] = 0xFFFFF6E8,
-        ['e'] = 0xFF111111,
-        ['p'] = 0xFFF48FB1,
+        ['k'] = 0xFF2A2433,
+        ['f'] = 0xFF8E9AB4,
+        ['d'] = 0xFF6A7492,
+        ['l'] = 0xFFB9C3DA,
+        ['c'] = 0xFFF4EADD,
+        ['p'] = 0xFFF2A0B2,
+        ['g'] = 0xFF6CD09A,
+        ['w'] = 0xFFFFFFFF,
+        ['r'] = 0xFFE0564F,
+        ['y'] = 0xFFF5C542,
         ['h'] = 0xFFE5484D,
         ['z'] = 0xFF7FB2F0,
     };
 
-    private static readonly string[] Body =
-    {
-        "..........k..k..",
-        ".........kokkok.",
-        "..k......kooook.",
-        ".kok.....koeoek.",
-        ".kok.....kooopk.",
-        "..kok.kkkkooook.",
-        "...kkoooooooook.",
-        "....koooooooook.",
-        "....koooowwwook.",
-        "....kkkkkkkkkkk.",
-    };
-
-    private static readonly string[] LegsA = { ".....k.k...k.k..", ".....k.k...k.k.." };
-    private static readonly string[] LegsB = { "....k.k.....k.k.", "....k.k.....k.k." };
-    private static readonly string[] LegsTucked = { ".....kk....kk...", "................" };
-    private static readonly string[] LegsDangling = { ".....k.k...k.k..", "....k...k.k...k." };
-    private static readonly string Empty = new('.', Width);
-
-    private static readonly string[] Heart = { ".h.h.", "hhhhh", ".hhh.", "..h.." };
-    private static readonly string[] Zzz = { "zzz", "..z", ".z.", "zzz" };
-
     private static readonly Dictionary<CatPose, string[]> Frames = new()
     {
-        [CatPose.WalkA] = Stack(Body, LegsA),
-        [CatPose.WalkB] = Stack(Body, LegsB),
-        [CatPose.Sit] = Stack(Body, LegsTucked),
-        [CatPose.SitBlink] = Stack(ClosedEyes(Body), LegsTucked),
-        // Lying down: body sinks two rows so it rests on the taskbar, legs hidden; the sleep mark pulses.
-        [CatPose.NapA] = Overlay(Stack(new[] { Empty, Empty }, ClosedEyes(Body)), Zzz, x: 0, y: 0),
-        [CatPose.NapB] = Stack(new[] { Empty, Empty }, ClosedEyes(Body)),
-        [CatPose.PettedA] = Overlay(Stack(ClosedEyes(Body), LegsTucked), Heart, x: 4, y: 0),
-        [CatPose.PettedB] = Overlay(Stack(ClosedEyes(Body), LegsTucked), Heart, x: 4, y: 1),
-        [CatPose.Dangle] = Stack(Body, LegsDangling),
+        [CatPose.WalkA] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            ".kk.......kfdfdfffffk...",
+            "kddk.....kfllffffffffk..",
+            "kdk......kflfffffffffk..",
+            "kfk......kfffffffkgwkfk.",
+            ".kfk.....kfffffffkggkfk.",
+            ".kfk.....kffffffffccccpk",
+            "..kfk....kfffffffcccckk.",
+            "..kfk..kkffffffffccck...",
+            "..kfdkkfffffffkrrryrk...",
+            "...kfffddfffffkrykffk...",
+            "...kfffffffddffffffk....",
+            "...kfffffffffffffffk....",
+            "...kffffffcccccccffk....",
+            "....kkfffkkkkkkkffkk....",
+            "....kfk.kfk...kfk.kfk...",
+            "....kfk.kfk...kfk.kfk...",
+            "....kck.kck...kck.kck...",
+        },
+        [CatPose.WalkB] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            ".kk.......kfdfdfffffk...",
+            "kddk.....kfllffffffffk..",
+            "kdk......kflfffffffffk..",
+            "kfk......kfffffffkgwkfk.",
+            ".kfk.....kfffffffkggkfk.",
+            ".kfk.....kffffffffccccpk",
+            "..kfk....kfffffffcccckk.",
+            "..kfk..kkffffffffccck...",
+            "..kfdkkfffffffkrrryrk...",
+            "...kfffddfffffkrykffk...",
+            "...kfffffffddffffffk....",
+            "...kfffffffffffffffk....",
+            "...kffffffcccccccffk....",
+            "....kkfffkkkkkkkffkk....",
+            "...kfk..kfk....kfk.kfk..",
+            "..kfk....kfk..kfk...kfk.",
+            "..kck....kck..kck...kck.",
+        },
+        [CatPose.Sit] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfdfdfffffk...",
+            ".........kfllffffffffk..",
+            ".........kflfffffffffk..",
+            ".........kfffffffkgwkfk.",
+            ".........kfffffffkggkfk.",
+            ".........kffffffffccccpk",
+            "..........kffffffcccckk.",
+            "..........kfffkrrryrrk..",
+            ".........kffffffkykccck.",
+            "........kfffffffffkcccck",
+            ".......kfddffffffffkccck",
+            "......kfffddffffffkfccck",
+            "......kffffffffffkffkffk",
+            "......kffffffffffkffkffk",
+            ".kk...kfffffffffkffkffk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
+        },
+        [CatPose.SitBlink] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfdfdfffffk...",
+            ".........kfllffffffffk..",
+            ".........kflfffffffffk..",
+            ".........kfffffffkffkfk.",
+            ".........kfffffffkkkkfk.",
+            ".........kffffffffccccpk",
+            "..........kffffffcccckk.",
+            "..........kfffkrrryrrk..",
+            ".........kffffffkykccck.",
+            "........kfffffffffkcccck",
+            ".......kfddffffffffkccck",
+            "......kfffddffffffkfccck",
+            "......kffffffffffkffkffk",
+            "......kffffffffffkffkffk",
+            ".kk...kfffffffffkffkffk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
+        },
+        [CatPose.NapA] = new[]
+        {
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "..zzzz..................",
+            "....z...................",
+            "...z....................",
+            "..zzzz..................",
+            "........................",
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..kkkkkkkkkfdfdfffffk...",
+            ".kffddffdffllffffffffk..",
+            "kfffffffffflfffffffffk..",
+            "kffffffffffffffffkffkfk.",
+            "kffffffffffffffffkkkkfk.",
+            "kfffffffffffffffffccccpk",
+            "kddddfffffffffkkkcckcck.",
+            ".kkkkkkkkkkkkkkkkkkkkkk.",
+        },
+        [CatPose.NapB] = new[]
+        {
+            "........................",
+            "........................",
+            "..zzzz..................",
+            "....z...................",
+            "...z....................",
+            "..zzzz..................",
+            "........................",
+            "........................",
+            "........................",
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..kkkkkkkkkfdfdfffffk...",
+            ".kffddffdffllffffffffk..",
+            "kfffffffffflfffffffffk..",
+            "kffffffffffffffffkffkfk.",
+            "kffffffffffffffffkkkkfk.",
+            "kfffffffffffffffffccccpk",
+            "kddddfffffffffkkkcckcck.",
+            ".kkkkkkkkkkkkkkkkkkkkkk.",
+        },
+        [CatPose.PettedA] = new[]
+        {
+            "............k....k......",
+            "..hh.hh....kpk..kpk.....",
+            ".hhhhhhh...kppkkkppk....",
+            "..hhhhh...kfdfdfffffk...",
+            "...hhh...kfllffffffffk..",
+            "....h....kflfffffffffk..",
+            ".........kffffffffkkffk.",
+            ".........kfffffffkffkfk.",
+            ".........kffffffffccccpk",
+            "..........kffffffcccckk.",
+            "..........kfffkrrryrrk..",
+            ".........kffffffkykccck.",
+            "........kfffffffffkcccck",
+            ".......kfddffffffffkccck",
+            "......kfffddffffffkfccck",
+            "......kffffffffffkffkffk",
+            "......kffffffffffkffkffk",
+            ".kk...kfffffffffkffkffk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
+        },
+        [CatPose.PettedB] = new[]
+        {
+            "..hh.hh.....k....k......",
+            ".hhhhhhh...kpk..kpk.....",
+            "..hhhhh....kppkkkppk....",
+            "...hhh....kfdfdfffffk...",
+            "....h....kfllffffffffk..",
+            ".........kflfffffffffk..",
+            ".........kffffffffkkffk.",
+            ".........kfffffffkffkfk.",
+            ".........kffffffffccccpk",
+            "..........kffffffcccckk.",
+            "..........kfffkrrryrrk..",
+            ".........kffffffkykccck.",
+            "........kfffffffffkcccck",
+            ".......kfddffffffffkccck",
+            "......kfffddffffffkfccck",
+            "......kffffffffffkffkffk",
+            "......kffffffffffkffkffk",
+            ".kk...kfffffffffkffkffk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
+        },
+        [CatPose.Dangle] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            ".kk.......kfdfdfffffk...",
+            "kddk.....kfllffffffffk..",
+            "kdk......kflfffffffffk..",
+            "kfk......kfffffffkgwkfk.",
+            ".kfk.....kfffffffkggkfk.",
+            ".kfk.....kffffffffccccpk",
+            "..kfk....kfffffffcccckk.",
+            "..kfk..kkffffffffccck...",
+            "..kfdkkfffffffkrrryrk...",
+            "...kfffddfffffkrykffk...",
+            "...kfffffffddffffffk....",
+            "...kfffffffffffffffk....",
+            "...kffffffcccccccffk....",
+            "....kkfffkkkkkkkffkk....",
+            "....kfk.kfk...kfk.kfk...",
+            "....kfk.kfk...kfk.kfk...",
+            "...kck...kck.kck...kck..",
+        },
     };
 
     public static IReadOnlyList<string> Rows(CatPose pose) => Frames[pose];
 
     /// <summary>The frame as ARGB pixels, row by row.</summary>
-    public static uint[] Argb(CatPose pose)
+    public static uint[] Argb(CatPose pose) => ToArgb(Frames[pose], 0, 0, Width, Height);
+
+    /// <summary>A 16x16 icon: the head from the sitting frame, centred vertically.</summary>
+    public static uint[] IconArgb()
     {
-        var rows = Frames[pose];
-        var pixels = new uint[Width * Height];
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < Width; x++)
-                pixels[y * Width + x] = Palette.TryGetValue(rows[y][x], out var c) ? c : 0u;
-        return pixels;
+        const int left = 8, rows = 12;
+        var head = ToArgb(Frames[CatPose.Sit], left, 0, IconSize, rows);
+        var icon = new uint[IconSize * IconSize];
+        int top = (IconSize - rows) / 2;
+        Array.Copy(head, 0, icon, top * IconSize, head.Length);
+        return icon;
     }
 
-    private static string[] Stack(params string[][] parts) => parts.SelectMany(p => p).ToArray();
-
-    private static string[] ClosedEyes(string[] rows) => rows.Select(r => r.Replace('e', 'o')).ToArray();
-
-    /// <summary>Paints <paramref name="shape"/> onto transparent pixels of <paramref name="rows"/>.</summary>
-    private static string[] Overlay(string[] rows, string[] shape, int x, int y)
+    private static uint[] ToArgb(string[] rows, int left, int top, int width, int height)
     {
-        var result = rows.Select(r => r.ToCharArray()).ToArray();
-        for (int dy = 0; dy < shape.Length; dy++)
-            for (int dx = 0; dx < shape[dy].Length; dx++)
-            {
-                char c = shape[dy][dx];
-                if (c != '.' && result[y + dy][x + dx] == '.')
-                    result[y + dy][x + dx] = c;
-            }
-        return result.Select(r => new string(r)).ToArray();
+        var pixels = new uint[width * height];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                pixels[y * width + x] = Palette.TryGetValue(rows[top + y][left + x], out var c) ? c : 0u;
+        return pixels;
     }
 }

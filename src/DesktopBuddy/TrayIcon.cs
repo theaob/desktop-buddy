@@ -52,15 +52,15 @@ internal sealed class TrayIcon : IDisposable
         Native.DestroyIcon(_iconHandle);
     }
 
-    /// <summary>Draws the sitting cat into a 16x16 icon.</summary>
+    /// <summary>Draws the cat's head into a 16x16 icon.</summary>
     private static (Drawing.Icon Icon, IntPtr Handle) CreateIcon()
     {
-        var pixels = CatPixels.Argb(CatPose.Sit);
-        int top = (16 - CatPixels.Height) / 2;
-        using var bmp = new Drawing.Bitmap(16, 16);
-        for (int y = 0; y < CatPixels.Height; y++)
-            for (int x = 0; x < CatPixels.Width; x++)
-                bmp.SetPixel(x, y + top, Drawing.Color.FromArgb(unchecked((int)pixels[y * CatPixels.Width + x])));
+        const int size = CatPixels.IconSize;
+        var pixels = CatPixels.IconArgb();
+        using var bmp = new Drawing.Bitmap(size, size);
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+                bmp.SetPixel(x, y, Drawing.Color.FromArgb(unchecked((int)pixels[y * size + x])));
 
         IntPtr handle = bmp.GetHicon();
         return (Drawing.Icon.FromHandle(handle), handle);

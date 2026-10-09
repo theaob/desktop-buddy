@@ -14,7 +14,7 @@ public class CatTests
 
     [Theory]
     [MemberData(nameof(AllPoses))]
-    public void Every_frame_is_16_by_12_and_uses_known_colours(CatPose pose)
+    public void Every_frame_has_the_sprite_size_and_uses_known_colours(CatPose pose)
     {
         var rows = CatPixels.Rows(pose);
 
@@ -25,6 +25,15 @@ public class CatTests
             Assert.All(row, c => Assert.True(c == '.' || CatPixels.Palette.ContainsKey(c), $"unknown pixel '{c}'"));
         });
         Assert.Equal(CatPixels.Width * CatPixels.Height, CatPixels.Argb(pose).Length);
+    }
+
+    [Fact]
+    public void Tray_icon_is_16_by_16_and_not_empty()
+    {
+        var icon = CatPixels.IconArgb();
+
+        Assert.Equal(CatPixels.IconSize * CatPixels.IconSize, icon.Length);
+        Assert.Contains(icon, pixel => pixel != 0);
     }
 
     [Fact]
