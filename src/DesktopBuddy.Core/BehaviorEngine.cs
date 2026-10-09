@@ -10,6 +10,8 @@ public enum BuddyState
     Pounce,     // in the air, leaping at the mouse
     Play,       // chasing the yarn ball
     Celebrate,  // a focus session just ended
+    WakeUp,     // slowly waking from a nap: blinks, stretches, yawns
+    Landing,    // squashed for a moment after a drop or a pounce
 }
 
 /// <summary>Where the user grabbed the cat, which decides how it hangs while carried.</summary>
@@ -27,6 +29,8 @@ public sealed class BehaviorEngine
     public const double LookSeconds = 2;
     public const double StalkSeconds = 1.4;
     public const double CelebrateSeconds = 3;
+    public const double WakeUpSeconds = 2.8;
+    public const double LandingSeconds = 0.4;
 
     // Any input within this window wakes a napping cat.
     public const double WakeIdleSeconds = 2;
@@ -98,6 +102,14 @@ public sealed class BehaviorEngine
                 if (TimeInState >= CelebrateSeconds)
                     Enter(BuddyState.Sit);
                 return;
+            case BuddyState.WakeUp:
+                if (TimeInState >= WakeUpSeconds)
+                    Enter(BuddyState.Sit);
+                return;
+            case BuddyState.Landing:
+                if (TimeInState >= LandingSeconds)
+                    Enter(BuddyState.Sit);
+                return;
             case BuddyState.Stalk:
                 if (!MouseGamesAllowed || !WalkingAllowed)
                     Enter(BuddyState.Sit);
@@ -106,7 +118,7 @@ public sealed class BehaviorEngine
                 return;
             case BuddyState.Nap:
                 if (userIdleSeconds < WakeIdleSeconds)
-                    Enter(BuddyState.Sit);
+                    Enter(BuddyState.WakeUp);
                 return;
         }
 
@@ -203,7 +215,7 @@ public sealed class BehaviorEngine
         if (State == BuddyState.Pounce)
             _huntCooldown = HuntCooldownSeconds;
         if (State is BuddyState.Falling or BuddyState.Pounce)
-            Enter(BuddyState.Sit);
+            Enter(BuddyState.Landing);
     }
 
     private void Enter(BuddyState state)

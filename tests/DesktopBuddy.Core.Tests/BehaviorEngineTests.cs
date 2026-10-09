@@ -72,7 +72,7 @@ public class BehaviorEngineTests
     }
 
     [Fact]
-    public void Naps_when_the_user_is_away_and_wakes_on_input()
+    public void Naps_when_the_user_is_away_and_wakes_slowly_on_input()
     {
         var engine = NewEngine();
         engine.NapAfterSeconds = 60;
@@ -84,6 +84,12 @@ public class BehaviorEngineTests
         Assert.Equal(BuddyState.Nap, engine.State);
 
         engine.Tick(Frame, userIdleSeconds: 0.5);
+        Assert.Equal(BuddyState.WakeUp, engine.State);
+
+        Run(engine, BehaviorEngine.WakeUpSeconds - 0.5);
+        Assert.Equal(BuddyState.WakeUp, engine.State);
+
+        Run(engine, 0.5 + Frame);
         Assert.Equal(BuddyState.Sit, engine.State);
     }
 
@@ -113,6 +119,9 @@ public class BehaviorEngineTests
         Assert.Equal(BuddyState.Falling, engine.State);
 
         engine.Landed();
+        Assert.Equal(BuddyState.Landing, engine.State);
+
+        Run(engine, BehaviorEngine.LandingSeconds + Frame);
         Assert.Equal(BuddyState.Sit, engine.State);
     }
 
@@ -195,7 +204,7 @@ public class BehaviorEngineTests
         Assert.Equal(BuddyState.Pounce, engine.State);
 
         engine.Landed();
-        Assert.Equal(BuddyState.Sit, engine.State);
+        Assert.Equal(BuddyState.Landing, engine.State);
         Assert.False(RunUntil(engine, BuddyState.Stalk, BehaviorEngine.HuntCooldownSeconds - 1));
     }
 

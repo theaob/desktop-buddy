@@ -4,6 +4,7 @@ public enum CatPose
 {
     WalkA, WalkB, Sit, SitBlink, NapA, NapB, PettedA, PettedB, Dangle,
     HeldBelly, Leap, CrouchA, CrouchB, ScratchA, ScratchB, Bat, LookUp,
+    FallA, FallB, Land, Drowsy, Stretch, Yawn,
 }
 
 public static class CatAnimation
@@ -15,10 +16,15 @@ public static class CatAnimation
     private const double HeartBobsPerSecond = 4;
     private const double ScratchesPerSecond = 8;
     private const double WigglesPerSecond = 6;
+    private const double FlailsPerSecond = 7;
+
+    // Waking up: drowsy until the first mark, stretching until the second, then a yawn.
+    private const double DrowsyUntil = 0.9;
+    private const double StretchUntil = 2.0;
 
     /// <summary>Which frame to show for a state that has lasted <paramref name="secondsInState"/>.</summary>
     /// <param name="moving">For following and playing: false while the cat stands still (under the mouse, or batting the ball).</param>
-    /// <param name="grip">How a carried or falling cat hangs.</param>
+    /// <param name="grip">How a carried cat hangs.</param>
     public static CatPose PoseFor(BuddyState state, double secondsInState, bool moving = true, DragGrip grip = DragGrip.Scruff) => state switch
     {
         BuddyState.Walk => Steps(secondsInState),
@@ -31,6 +37,11 @@ public static class CatAnimation
         BuddyState.Play => moving ? Steps(secondsInState) : CatPose.Bat,
         BuddyState.Stalk => Alternate(secondsInState * WigglesPerSecond, CatPose.CrouchA, CatPose.CrouchB),
         BuddyState.Pounce => CatPose.Leap,
+        BuddyState.Falling => Alternate(secondsInState * FlailsPerSecond, CatPose.FallA, CatPose.FallB),
+        BuddyState.Landing => CatPose.Land,
+        BuddyState.WakeUp => secondsInState < DrowsyUntil ? CatPose.Drowsy
+            : secondsInState < StretchUntil ? CatPose.Stretch
+            : CatPose.Yawn,
         _ => grip == DragGrip.Belly ? CatPose.HeldBelly : CatPose.Dangle,
     };
 

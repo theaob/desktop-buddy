@@ -92,12 +92,21 @@ public class CatTests
         Assert.Equal(CatPose.SitBlink, CatAnimation.PoseFor(BuddyState.Sit, 3.9));
     }
 
-    [Theory]
-    [InlineData(BuddyState.Dragged)]
-    [InlineData(BuddyState.Falling)]
-    public void Held_or_falling_cat_dangles(BuddyState state)
+    [Fact]
+    public void Held_cat_dangles_and_falling_cat_flails()
     {
-        Assert.Equal(CatPose.Dangle, CatAnimation.PoseFor(state, 0.5));
+        Assert.Equal(CatPose.Dangle, CatAnimation.PoseFor(BuddyState.Dragged, 0.5));
+        Assert.Equal(CatPose.FallA, CatAnimation.PoseFor(BuddyState.Falling, 0));
+        Assert.Equal(CatPose.FallB, CatAnimation.PoseFor(BuddyState.Falling, 0.2));
+        Assert.Equal(CatPose.Land, CatAnimation.PoseFor(BuddyState.Landing, 0.1));
+    }
+
+    [Fact]
+    public void Waking_cat_blinks_then_stretches_then_yawns()
+    {
+        Assert.Equal(CatPose.Drowsy, CatAnimation.PoseFor(BuddyState.WakeUp, 0.3));
+        Assert.Equal(CatPose.Stretch, CatAnimation.PoseFor(BuddyState.WakeUp, 1.5));
+        Assert.Equal(CatPose.Yawn, CatAnimation.PoseFor(BuddyState.WakeUp, 2.5));
     }
 
     [Fact]
@@ -116,7 +125,6 @@ public class CatTests
     public void Belly_hold_has_its_own_pose()
     {
         Assert.Equal(CatPose.HeldBelly, CatAnimation.PoseFor(BuddyState.Dragged, 0, grip: DragGrip.Belly));
-        Assert.Equal(CatPose.HeldBelly, CatAnimation.PoseFor(BuddyState.Falling, 0, grip: DragGrip.Belly));
     }
 
     [Fact]
