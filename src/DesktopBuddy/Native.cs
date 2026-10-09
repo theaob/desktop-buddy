@@ -73,6 +73,14 @@ internal static class Native
 
     public const int SM_CMONITORS = 80;
 
+    // Shell hook notifications (RegisterShellHookWindow); wParam of the "SHELLHOOK" message.
+    public const int HSHELL_WINDOWCREATED = 1;
+    public const int HSHELL_FLASH = 0x8006;
+
+    public const uint EVENT_SYSTEM_MOVESIZEEND = 0x000B;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
+
     // SHQueryUserNotificationState results
     public const int QUNS_BUSY = 2;
     public const int QUNS_RUNNING_D3D_FULL_SCREEN = 3;
@@ -143,6 +151,45 @@ internal static class Native
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool DestroyIcon(IntPtr hIcon);
+
+    [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetSystemTimes(out ulong idleTime, out ulong kernelTime, out ulong userTime);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool RegisterShellHookWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool DeregisterShellHookWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int RegisterWindowMessage(string message);
+
+    public delegate void WinEventProc(IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint thread, uint time);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr module, WinEventProc proc, uint process, uint thread, uint flags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool UnhookWinEvent(IntPtr hook);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    /// <summary>Keeps a window out of Alt+Tab and stops clicks on it from stealing focus.</summary>
+    public static void MakeToolWindow(IntPtr hwnd)
+    {
+        int ex = GetWindowLong(hwnd, GWL_EXSTYLE);
+        ex = (ex | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) & ~WS_EX_APPWINDOW;
+        SetWindowLong(hwnd, GWL_EXSTYLE, ex);
+    }
 
     /// <summary>Seconds since the last keyboard or mouse input anywhere on the PC.</summary>
     public static double UserIdleSeconds()

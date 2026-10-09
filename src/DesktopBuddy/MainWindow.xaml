@@ -27,6 +27,7 @@
         </Image.RenderTransform>
         <Image.ContextMenu>
             <ContextMenu Opened="OnMenuOpened">
+                <MenuItem x:Name="FocusItem" Header="Start focus timer" Click="OnFocus" />
                 <MenuItem Header="Settings..." Click="OnSettings" />
                 <MenuItem x:Name="PauseItem" Header="Pause walking" IsCheckable="True" Click="OnPause" />
                 <MenuItem Header="Hide" Click="OnHide" />

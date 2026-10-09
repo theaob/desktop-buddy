@@ -15,7 +15,7 @@ public readonly record struct CatLook(FurColor Fur, CatPattern Pattern);
 /// Coat pixels are marked by the role they play in each pattern, and <see cref="ColorsFor"/> colours them:
 /// f = plain fur, d = tabby marking, t = tabby stripe, s = sock, a = patch, b = patch over a tabby marking.
 /// Fixed colours: k = outline, l = fur highlight, c = cream, p = pink (ears, nose), g = green eye,
-/// w = eye shine, r = collar, y = bell, h = heart, z = sleep mark, . = transparent.
+/// w = eye shine, r = collar, y = bell, h = heart, z = sleep mark, q = sweat drop, . = transparent.
 /// </summary>
 public static class CatPixels
 {
@@ -70,6 +70,7 @@ public static class CatPixels
             ['y'] = 0xFFF5C542,
             ['h'] = 0xFFE5484D,
             ['z'] = 0xFF7FB2F0,
+            ['q'] = 0xFF8FD0F5,
         };
     }
 
@@ -264,30 +265,230 @@ public static class CatPixels
             "............k....k......",
             "...........kpk..kpk.....",
             "...........kppkkkppk....",
-            ".kk.......kfbabfffffk...",
-            "kddk.....kfllaaffffffk..",
-            "kdk......kflaaaffffffk..",
-            "ktk......kfffffffkgwkfk.",
-            ".kfk.....kfffffffkggkfk.",
-            ".kfk.....kffffffffccccpk",
-            "..ktk....kfffffffcccckk.",
-            "..kfk..kkffffaaafccck...",
-            "..kfdkkbffftfakrrryrk...",
+            "..........kfbabfffffk...",
+            ".........kfllaaffffffk..",
+            ".........kflaaaffffffk..",
+            ".........kfffffffkgwkfk.",
+            ".........kfffffffkggkfk.",
+            ".........kffffffffccccpk",
+            "..........kffffffcccckk.",
+            "..........kfffkrrryrrk..",
+            "...........kffftffccck..",
+            "..........kffabaffccck..",
+            "..........kfaabaafccck..",
+            "..........kfbbaaatfffk..",
+            "..........kfabaaatfffk..",
+            "..........kftaaatfffk...",
+            ".........kfkkffftsfksk..",
+            ".........kfkkckckckkck..",
+            ".........kdk.k.k.k..k...",
+        },
+        [CatPose.HeldBelly] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfbabfffffk...",
+            ".........kfllaaffffffk..",
+            ".........kflaaaffffffk..",
+            ".........kfffffffkgwkfk.",
+            ".........kfffffffkggkfk.",
+            ".........kffffffffccccpk",
+            ".........kfffffffcccckk.",
+            ".......kkffffaaafccck...",
+            "....kkkbffftfakrrryrk...",
             "...kaabbbftffakrykffk...",
             "...kaabaaftddftffffk....",
             "...kabaaatffftfffffk....",
-            "...kfbaaftcccccccffk....",
-            "....kkfffkkkkkkkffkk....",
-            "....ksk.ksk...ksk.ksk...",
-            "....ksk.ksk...ksk.ksk...",
-            "...kck...kck.kck...kck..",
+            "..kffbaaftcccccccffk....",
+            "..kffkfffkkkkkkkffkk....",
+            "..kskskkksk...kskkksk...",
+            "..kdksk.ksk...ksk.ksk...",
+            "...kkck.kck...kck.kck...",
+        },
+        [CatPose.Leap] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfbabfffffk...",
+            ".........kfllaaffffffk..",
+            "..k......kflaaaffffffk..",
+            ".kdk.....kfffffffkgwkfk.",
+            ".kdk.....kfffffffkggkfk.",
+            "..kfk....kffffffffccccpk",
+            "..kfk....kfffffffcccckk.",
+            "...kfk.kkffffaaafccck...",
+            "....kfkbafftfakrrryrk...",
+            "...kfabbbatffabryfffkkkk",
+            "kkkkfabaaatddftfffffsssc",
+            "cssffbaaabffftffffffsssc",
+            "cssfftaaatcccccffffkkkkk",
+            "kkkkkkkkkkkkkkkkkkk.....",
+            "........................",
+            "........................",
+            "........................",
+        },
+        [CatPose.CrouchA] = new[]
+        {
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..kkkkkkkkkfdabaffffk...",
+            ".ktfbbbfdftllaaafffffk..",
+            "ktfaabaaftflfaaafffffk..",
+            "ktfaabaaftfffffffkgwkfk.",
+            "kffabaaatafffffffkggkfk.",
+            "kfffbaafbaafffffffccccpk",
+            "kddddfftfaffffkkkcckcck.",
+            ".kkkkkkkkkkkkkkkkkkkkkk.",
+        },
+        [CatPose.CrouchB] = new[]
+        {
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "..kkkkkkk..kppkkkppk....",
+            ".kffdddfdkkfdabaffffk...",
+            "kftfabbffftllaaafffffk..",
+            "ktfaabaaftflfaaafffffk..",
+            "ktfabbaaftfffffffkgwkfk.",
+            "kffabaaadafffffffkggkfk.",
+            "kdddbaafbaafffffffccccpk",
+            ".kkkkkkkkaffffkkkcckcck.",
+            ".kkkkkkkkkkkkkkkkkkkkkk.",
+        },
+        [CatPose.ScratchA] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfbabfffffk...",
+            ".........kfllaaffffffk..",
+            ".........kflaaaffffffk..",
+            ".........kfffffffkffkfk.",
+            ".........kfffffffkkkkfk.",
+            "......cc.kffffffffccccpk",
+            ".....kssk.kffffffcccckk.",
+            ".....kssk.kaaakrrryrrk..",
+            ".....ksskkfbaaftkykccck.",
+            "....kffkkftaaatfffkcccck",
+            "....kffkfbbafftffffkccck",
+            "....kffkabbbatffffkfccck",
+            "....kffkabaaatfffksskssk",
+            ".....kkfbaaabffftksskssk",
+            ".kk...kftaaatfffkfskssk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
+        },
+        [CatPose.ScratchB] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfbabfffffk...",
+            ".........kfllaaffffffk..",
+            ".........kflaaaffffffk..",
+            ".........kfffffffkffkfk.",
+            ".........kfffffffkkkkfk.",
+            ".........kffffffffccccpk",
+            "......cc..kffffffcccckk.",
+            ".....kssk.kaaakrrryrrk..",
+            ".....ksskkfbaaftkykccck.",
+            "....kffkkftaaatfffkcccck",
+            "....kffkfbbafftffffkccck",
+            "....kffkabbbatffffkfccck",
+            "....kffkabaaatfffksskssk",
+            ".....kkfbaaabffftksskssk",
+            ".kk...kftaaatfffkfskssk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
+        },
+        [CatPose.Bat] = new[]
+        {
+            "..........k....k........",
+            ".........kpk..kpk.......",
+            ".........kppkkkppk......",
+            "........kfbabfffffk.....",
+            ".......kfllaaffffffk....",
+            ".......kflaaaffffffk....",
+            ".......kfffffffkgwkfk...",
+            ".......kfffffffkggkfk...",
+            ".......kffffffffccccpk..",
+            "........kffffffcccckk...",
+            "........kaaakrrryrrk..k.",
+            ".......kfbabffkykccckkck",
+            "......kffabafftfkcckssck",
+            ".....ktbbatffftffkkfskk.",
+            "....ktabbbafftffkkffkk..",
+            "....ktababafftfksskk....",
+            "....kfbababftffkssk.....",
+            "k...kffabafftfkfskk.....",
+            "dkkkkffffffffkcckk......",
+            "kdddddkkkkkkkkkkkkkk....",
+        },
+        [CatPose.LookUp] = new[]
+        {
+            "............k....k......",
+            "...........kpk..kpk.....",
+            "...........kppkkkppk....",
+            "..........kfbabfffffk...",
+            ".........kfllaaffffffk..",
+            ".........kflaaaffkgwkk..",
+            ".........kfffffffkggkfk.",
+            ".........kffffffffffffk.",
+            ".........kffffffffccccpk",
+            "..........kffffffcccckk.",
+            "..........kaaakrrryrrk..",
+            ".........kfbaaftkykccck.",
+            "........kftaaatfffkcccck",
+            ".......kfbbafftffffkccck",
+            "......kfabbbatffffkfccck",
+            "......kfabaaatfffksskssk",
+            "......kfbaaabffftksskssk",
+            ".kk...kftaaatfffkfskssk.",
+            "kddkkkkffffffffkcckcck..",
+            ".kkdddddkkkkkkkkkkkkkk..",
         },
     };
 
     public static IReadOnlyList<string> Rows(CatPose pose) => Frames[pose];
 
+    /// <summary>A sweat drop beside the head, shown when the PC is busy. Only poses with the head in the usual place get one.</summary>
+    private static readonly (int X, int Y)[] SweatDrop = { (8, 1), (7, 2), (8, 2), (9, 2), (7, 3), (8, 3), (9, 3), (8, 4) };
+
+    private static readonly HashSet<CatPose> SweatPoses = new()
+    {
+        CatPose.WalkA, CatPose.WalkB, CatPose.Sit, CatPose.SitBlink, CatPose.LookUp,
+    };
+
     /// <summary>The frame as ARGB pixels, row by row.</summary>
-    public static uint[] Argb(CatPose pose, CatLook look = default) => ToArgb(Frames[pose], ColorsFor(look), 0, 0, Width, Height);
+    public static uint[] Argb(CatPose pose, CatLook look = default, bool sweaty = false)
+    {
+        var colors = ColorsFor(look);
+        var pixels = ToArgb(Frames[pose], colors, 0, 0, Width, Height);
+        if (sweaty && SweatPoses.Contains(pose))
+            foreach (var (x, y) in SweatDrop)
+                pixels[y * Width + x] = colors['q'];
+        return pixels;
+    }
 
     /// <summary>A 16x16 icon: the head from the sitting frame, centred vertically.</summary>
     public static uint[] IconArgb(CatLook look = default)

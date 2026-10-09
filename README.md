@@ -8,6 +8,8 @@ Plan: [Desktop Buddy: Project Plan](https://claude.ai/code/artifact/2b44736d-a7f
 
 Phase 1: a living buddy. The cat walks, sits, blinks, naps when you're away, reacts when you click it, and can be dragged around. It has a tray icon, settings, and an option to start with Windows. See [the phase 1 test checklist](docs/phase-1-test-checklist.md).
 
+Phase 2: a useful, livelier buddy. It scratches, plays with a yarn ball, follows and pounces on the mouse, looks at windows that open or flash, and hangs by the scruff or belly depending on where you grab it. It also gives break reminders, holds up a focus timer, and hurries and sweats when the PC is busy. See [the phase 2 test checklist](docs/phase-2-test-checklist.md).
+
 ## Build
 
 Requires the .NET 8 SDK on Windows.

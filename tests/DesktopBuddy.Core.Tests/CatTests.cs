@@ -99,4 +99,43 @@ public class CatTests
     {
         Assert.Equal(CatPose.Dangle, CatAnimation.PoseFor(state, 0.5));
     }
+
+    [Fact]
+    public void New_states_pick_their_poses()
+    {
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Scratch, 0.1), new[] { CatPose.ScratchA, CatPose.ScratchB });
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Stalk, 0.1), new[] { CatPose.CrouchA, CatPose.CrouchB });
+        Assert.Equal(CatPose.Leap, CatAnimation.PoseFor(BuddyState.Pounce, 0.1));
+        Assert.Equal(CatPose.LookUp, CatAnimation.PoseFor(BuddyState.Look, 0.1));
+        Assert.Equal(CatPose.Bat, CatAnimation.PoseFor(BuddyState.Play, 0.1, moving: false));
+        Assert.Equal(CatPose.WalkA, CatAnimation.PoseFor(BuddyState.Follow, 0, moving: true));
+        Assert.Equal(CatPose.Sit, CatAnimation.PoseFor(BuddyState.Follow, 0, moving: false));
+    }
+
+    [Fact]
+    public void Belly_hold_has_its_own_pose()
+    {
+        Assert.Equal(CatPose.HeldBelly, CatAnimation.PoseFor(BuddyState.Dragged, 0, grip: DragGrip.Belly));
+        Assert.Equal(CatPose.HeldBelly, CatAnimation.PoseFor(BuddyState.Falling, 0, grip: DragGrip.Belly));
+    }
+
+    [Fact]
+    public void Sweat_drop_only_on_poses_with_room_for_it()
+    {
+        Assert.NotEqual(CatPixels.Argb(CatPose.WalkA), CatPixels.Argb(CatPose.WalkA, sweaty: true));
+        Assert.Equal(CatPixels.Argb(CatPose.NapA), CatPixels.Argb(CatPose.NapA, sweaty: true));
+    }
+
+    [Fact]
+    public void Sweat_drop_only_covers_empty_pixels()
+    {
+        foreach (var pose in new[] { CatPose.WalkA, CatPose.WalkB, CatPose.Sit, CatPose.SitBlink, CatPose.LookUp })
+        {
+            var dry = CatPixels.Argb(pose);
+            var wet = CatPixels.Argb(pose, sweaty: true);
+            for (int i = 0; i < dry.Length; i++)
+                if (dry[i] != wet[i])
+                    Assert.Equal(0u, dry[i]);
+        }
+    }
 }
