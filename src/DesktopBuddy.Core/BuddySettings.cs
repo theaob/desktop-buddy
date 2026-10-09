@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DesktopBuddy.Core;
 
@@ -16,17 +17,30 @@ public sealed class BuddySettings
 
     public bool Paused { get; set; }
 
+    public FurColor Fur { get; set; }
+
+    public CatPattern Pattern { get; set; }
+
+    [JsonIgnore]
+    public CatLook Look => new(Fur, Pattern);
+
     public BuddySettings Normalized() => new()
     {
         WalkSpeed = double.IsFinite(WalkSpeed) ? Math.Clamp(WalkSpeed, MinWalkSpeed, MaxWalkSpeed) : 1.5,
         NapAfterMinutes = Math.Clamp(NapAfterMinutes, MinNapAfterMinutes, MaxNapAfterMinutes),
         Paused = Paused,
+        Fur = Enum.IsDefined(Fur) ? Fur : default,
+        Pattern = Enum.IsDefined(Pattern) ? Pattern : default,
     };
 }
 
 public static class SettingsStore
 {
-    private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions Options = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     /// <summary>Reads settings, falling back to defaults when the file is missing or unreadable.</summary>
     public static BuddySettings Load(string path)

@@ -58,6 +58,13 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Saves a new fur colour or pattern and redraws the tray icon; the cat picks it up on its next frame.</summary>
+    internal void ApplyLook()
+    {
+        SaveSettings();
+        _tray?.SetLook(Settings.Look);
+    }
+
     internal void TogglePaused()
     {
         Settings.Paused = !Settings.Paused;

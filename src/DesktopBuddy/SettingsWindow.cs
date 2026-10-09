@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using DesktopBuddy.Core;
 
 namespace DesktopBuddy;
@@ -71,6 +72,30 @@ internal sealed class SettingsWindow : Window
         };
         ShowNap();
 
+        var preview = new Image
+        {
+            Width = CatPixels.Width * 3,
+            Height = CatPixels.Height * 3,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = gap,
+        };
+        RenderOptions.SetBitmapScalingMode(preview, BitmapScalingMode.NearestNeighbor);
+        void ShowPreview() => preview.Source = CatSprite.Frame(CatPose.Sit, settings.Look);
+        ShowPreview();
+
+        var fur = Choice(FurNames, settings.Fur, gap, value =>
+        {
+            settings.Fur = value;
+            ShowPreview();
+            app.ApplyLook();
+        });
+        var pattern = Choice(PatternNames, settings.Pattern, gap, value =>
+        {
+            settings.Pattern = value;
+            ShowPreview();
+            app.ApplyLook();
+        });
+
         var close = new Button { Content = "Close", IsCancel = true, IsDefault = true, Padding = new Thickness(16, 4, 16, 4), HorizontalAlignment = HorizontalAlignment.Right };
         close.Click += (_, _) => Close();
 
@@ -81,7 +106,49 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(speed);
         panel.Children.Add(napLabel);
         panel.Children.Add(nap);
+        panel.Children.Add(new TextBlock { Text = "Fur colour" });
+        panel.Children.Add(fur);
+        panel.Children.Add(new TextBlock { Text = "Pattern" });
+        panel.Children.Add(pattern);
+        panel.Children.Add(preview);
         panel.Children.Add(close);
         Content = panel;
+    }
+
+    private static readonly Dictionary<FurColor, string> FurNames = new()
+    {
+        [FurColor.BlueGrey] = "Blue-grey",
+        [FurColor.Ginger] = "Ginger",
+        [FurColor.Charcoal] = "Charcoal",
+        [FurColor.Cocoa] = "Cocoa",
+        [FurColor.Cream] = "Cream",
+        [FurColor.Snow] = "Snow",
+    };
+
+    private static readonly Dictionary<CatPattern, string> PatternNames = new()
+    {
+        [CatPattern.Tabby] = "Tabby stripes",
+        [CatPattern.Solid] = "Solid",
+        [CatPattern.Socks] = "White socks",
+        [CatPattern.Patches] = "Patches",
+    };
+
+    /// <summary>A drop-down of named choices that reports the picked value.</summary>
+    private static ComboBox Choice<T>(Dictionary<T, string> names, T current, Thickness margin, Action<T> picked) where T : notnull
+    {
+        var box = new ComboBox
+        {
+            ItemsSource = names,
+            DisplayMemberPath = "Value",
+            SelectedValuePath = "Key",
+            SelectedValue = current,
+            Margin = margin,
+        };
+        box.SelectionChanged += (_, _) =>
+        {
+            if (box.SelectedValue is T value)
+                picked(value);
+        };
+        return box;
     }
 }

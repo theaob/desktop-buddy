@@ -45,7 +45,7 @@ public partial class MainWindow : Window
     {
         _settings = settings;
         InitializeComponent();
-        CatImage.Source = CatSprite.Frame(CatPose.Sit);
+        CatImage.Source = CatSprite.Frame(CatPose.Sit, settings.Look);
         SourceInitialized += OnSourceInitialized;
         _timer.Tick += OnTick;
     }
@@ -92,7 +92,7 @@ public partial class MainWindow : Window
         _engine.WalkingAllowed = !_settings.Paused && IsHorizontalTaskbar;
         _engine.Tick(elapsed, Native.UserIdleSeconds());
 
-        CatImage.Source = CatSprite.Frame(CatAnimation.PoseFor(_engine.State, _engine.TimeInState));
+        CatImage.Source = CatSprite.Frame(CatAnimation.PoseFor(_engine.State, _engine.TimeInState), _settings.Look);
         Flip.ScaleX = _direction;
         Move();
     }

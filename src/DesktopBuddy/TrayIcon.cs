@@ -8,8 +8,8 @@ namespace DesktopBuddy;
 internal sealed class TrayIcon : IDisposable
 {
     private readonly Forms.NotifyIcon _notifyIcon;
-    private readonly Drawing.Icon _icon;
-    private readonly IntPtr _iconHandle;
+    private Drawing.Icon _icon;
+    private IntPtr _iconHandle;
 
     public TrayIcon(App app)
     {
@@ -33,7 +33,7 @@ internal sealed class TrayIcon : IDisposable
             startup.Checked = StartupRegistration.IsEnabled();
         };
 
-        (_icon, _iconHandle) = CreateIcon();
+        (_icon, _iconHandle) = CreateIcon(app.Settings.Look);
         _notifyIcon = new Forms.NotifyIcon
         {
             Icon = _icon,
@@ -42,6 +42,16 @@ internal sealed class TrayIcon : IDisposable
             Visible = true,
         };
         _notifyIcon.DoubleClick += (_, _) => app.ShowSettings();
+    }
+
+    /// <summary>Redraws the icon after the fur colour or pattern changes.</summary>
+    public void SetLook(CatLook look)
+    {
+        var (oldIcon, oldHandle) = (_icon, _iconHandle);
+        (_icon, _iconHandle) = CreateIcon(look);
+        _notifyIcon.Icon = _icon;
+        oldIcon.Dispose();
+        Native.DestroyIcon(oldHandle);
     }
 
     public void Dispose()
@@ -53,10 +63,10 @@ internal sealed class TrayIcon : IDisposable
     }
 
     /// <summary>Draws the cat's head into a 16x16 icon.</summary>
-    private static (Drawing.Icon Icon, IntPtr Handle) CreateIcon()
+    private static (Drawing.Icon Icon, IntPtr Handle) CreateIcon(CatLook look)
     {
         const int size = CatPixels.IconSize;
-        var pixels = CatPixels.IconArgb();
+        var pixels = CatPixels.IconArgb(look);
         using var bmp = new Drawing.Bitmap(size, size);
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)

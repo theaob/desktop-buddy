@@ -59,4 +59,22 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(BuddySettings.MaxWalkSpeed, settings.WalkSpeed);
         Assert.Equal(BuddySettings.MinNapAfterMinutes, settings.NapAfterMinutes);
     }
+
+    [Fact]
+    public void Fur_and_pattern_are_saved_by_name()
+    {
+        SettingsStore.Save(SettingsPath, new BuddySettings { Fur = FurColor.Ginger, Pattern = CatPattern.Socks });
+
+        Assert.Contains("\"Ginger\"", File.ReadAllText(SettingsPath));
+        Assert.Equal(new CatLook(FurColor.Ginger, CatPattern.Socks), SettingsStore.Load(SettingsPath).Look);
+    }
+
+    [Fact]
+    public void Unknown_fur_or_pattern_falls_back_to_the_default_look()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(SettingsPath, """{ "Fur": 42, "Pattern": 7 }""");
+
+        Assert.Equal(default(CatLook), SettingsStore.Load(SettingsPath).Look);
+    }
 }

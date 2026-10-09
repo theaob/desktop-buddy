@@ -37,6 +37,45 @@ public class CatTests
     }
 
     [Fact]
+    public void Every_fur_and_pattern_colours_every_pixel_character()
+    {
+        foreach (var fur in Enum.GetValues<FurColor>())
+            foreach (var pattern in Enum.GetValues<CatPattern>())
+                Assert.Equal(CatPixels.Palette.Keys.Order(), CatPixels.ColorsFor(new CatLook(fur, pattern)).Keys.Order());
+    }
+
+    [Fact]
+    public void Each_fur_colour_looks_different()
+    {
+        var sits = Enum.GetValues<FurColor>().Select(fur => CatPixels.Argb(CatPose.Sit, new CatLook(fur, CatPattern.Tabby))).ToList();
+
+        for (int i = 0; i < sits.Count; i++)
+            for (int j = i + 1; j < sits.Count; j++)
+                Assert.NotEqual(sits[i], sits[j]);
+    }
+
+    [Theory]
+    [InlineData(CatPattern.Solid)]
+    [InlineData(CatPattern.Socks)]
+    [InlineData(CatPattern.Patches)]
+    public void Each_pattern_differs_from_tabby(CatPattern pattern)
+    {
+        foreach (var fur in Enum.GetValues<FurColor>())
+            Assert.NotEqual(
+                CatPixels.Argb(CatPose.WalkA, new CatLook(fur, CatPattern.Tabby)),
+                CatPixels.Argb(CatPose.WalkA, new CatLook(fur, pattern)));
+    }
+
+    [Fact]
+    public void Solid_cat_has_no_stripes()
+    {
+        var colors = CatPixels.ColorsFor(new CatLook(FurColor.Ginger, CatPattern.Solid));
+
+        Assert.Equal(colors['f'], colors['d']);
+        Assert.Equal(colors['f'], colors['t']);
+    }
+
+    [Fact]
     public void Walking_alternates_steps()
     {
         var first = CatAnimation.PoseFor(BuddyState.Walk, 0);

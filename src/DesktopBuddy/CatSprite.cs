@@ -8,18 +8,18 @@ namespace DesktopBuddy;
 /// <summary>Turns the cat's pixel frames into cached WPF bitmaps.</summary>
 internal static class CatSprite
 {
-    private static readonly Dictionary<CatPose, BitmapSource> Cache = new();
+    private static readonly Dictionary<(CatPose, CatLook), BitmapSource> Cache = new();
 
-    public static BitmapSource Frame(CatPose pose)
+    public static BitmapSource Frame(CatPose pose, CatLook look)
     {
-        if (Cache.TryGetValue(pose, out var cached))
+        if (Cache.TryGetValue((pose, look), out var cached))
             return cached;
 
         // Palette colours are fully opaque or fully transparent, so straight ARGB is already premultiplied.
         var bmp = new WriteableBitmap(CatPixels.Width, CatPixels.Height, 96, 96, PixelFormats.Pbgra32, null);
-        bmp.WritePixels(new Int32Rect(0, 0, CatPixels.Width, CatPixels.Height), CatPixels.Argb(pose), CatPixels.Width * 4, 0);
+        bmp.WritePixels(new Int32Rect(0, 0, CatPixels.Width, CatPixels.Height), CatPixels.Argb(pose, look), CatPixels.Width * 4, 0);
         bmp.Freeze();
-        Cache[pose] = bmp;
+        Cache[(pose, look)] = bmp;
         return bmp;
     }
 }
