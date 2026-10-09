@@ -8,22 +8,27 @@ internal static class FullscreenDetector
         "Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd",
     };
 
+    /// <param name="catMonitor">The monitor the cat is on; fullscreen apps on other monitors don't hide it.</param>
     /// <returns>Why the buddy should hide, or null when it can stay.</returns>
-    public static string? HideReason(IntPtr ownWindow)
+    public static string? HideReason(IntPtr ownWindow, IntPtr catMonitor)
     {
+        var fg = Native.GetForegroundWindow();
+        bool fgOnCatMonitor = fg == IntPtr.Zero || Native.MonitorFromWindow(fg, Native.MONITOR_DEFAULTTONEAREST) == catMonitor;
+
         if (Native.SHQueryUserNotificationState(out int state) == 0)
         {
             switch (state)
             {
-                case Native.QUNS_RUNNING_D3D_FULL_SCREEN: return "fullscreen game (Direct3D)";
+                case Native.QUNS_RUNNING_D3D_FULL_SCREEN when fgOnCatMonitor: return "fullscreen game (Direct3D)";
                 case Native.QUNS_PRESENTATION_MODE: return "presentation mode";
-                case Native.QUNS_BUSY: return "fullscreen app (busy)";
+                case Native.QUNS_BUSY when fgOnCatMonitor: return "fullscreen app (busy)";
             }
         }
 
         // Borderless fullscreen windows (browser video, many games) don't always set the
-        // notification state, so also check whether the foreground window covers its monitor.
-        var fg = Native.GetForegroundWindow();
+        // notification state, so also check whether the foreground window covers the cat's monitor.
+        if (!fgOnCatMonitor)
+            return null;
         if (fg == IntPtr.Zero || fg == ownWindow || fg == Native.GetShellWindow() || fg == Native.GetDesktopWindow())
             return null;
         if (ShellClasses.Contains(Native.ClassName(fg)))

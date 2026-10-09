@@ -12,17 +12,25 @@
         SizeToContent="WidthAndHeight">
     <!-- Transparent pixels of a layered window are click-through, so only the cat itself takes clicks. -->
     <Image x:Name="CatImage"
-           Width="48" Height="36"
+           Width="48" Height="40"
            Stretch="Fill"
+           Cursor="Hand"
+           ToolTip="Click to pet, drag to move"
            RenderOptions.BitmapScalingMode="NearestNeighbor"
-           RenderTransformOrigin="0.5,0.5">
+           RenderTransformOrigin="0.5,0.5"
+           MouseLeftButtonDown="OnCatMouseDown"
+           MouseMove="OnCatMouseMove"
+           MouseLeftButtonUp="OnCatMouseUp"
+           LostMouseCapture="OnCatLostCapture">
         <Image.RenderTransform>
             <ScaleTransform x:Name="Flip" ScaleX="1" />
         </Image.RenderTransform>
         <Image.ContextMenu>
-            <ContextMenu>
+            <ContextMenu Opened="OnMenuOpened">
+                <MenuItem Header="Settings..." Click="OnSettings" />
+                <MenuItem x:Name="PauseItem" Header="Pause walking" IsCheckable="True" Click="OnPause" />
+                <MenuItem Header="Hide" Click="OnHide" />
                 <MenuItem Header="Diagnostics..." Click="OnDiagnostics" />
-                <MenuItem x:Name="PauseItem" Header="Pause walking" IsCheckable="True" />
                 <Separator />
                 <MenuItem Header="Exit" Click="OnExit" />
             </ContextMenu>
