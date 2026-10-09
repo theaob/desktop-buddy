@@ -77,4 +77,16 @@ public sealed class SettingsStoreTests : IDisposable
 
         Assert.Equal(default(CatLook), SettingsStore.Load(SettingsPath).Look);
     }
+
+    [Fact]
+    public void Home_spot_loads_back_and_is_empty_by_default()
+    {
+        Assert.Null(SettingsStore.Load(SettingsPath).HomeX);
+
+        SettingsStore.Save(SettingsPath, new BuddySettings { HomeX = -1500, HomeY = 900 });
+        var loaded = SettingsStore.Load(SettingsPath);
+
+        Assert.Equal(-1500, loaded.HomeX);
+        Assert.Equal(900, loaded.HomeY);
+    }
 }

@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private IntPtr _hwnd;
     private int _frame;
     private double _lastTickSeconds;
+    private IntPtr _monitor;  // the monitor the cat lives on
     private TaskbarInfo? _taskbar;
     private string? _hideReason;
     private double _walkOffset = double.NaN;  // physical px from the left end of the walk zone
@@ -64,6 +65,7 @@ public partial class MainWindow : Window
         ex = (ex | Native.WS_EX_TOOLWINDOW | Native.WS_EX_NOACTIVATE) & ~Native.WS_EX_APPWINDOW;
         Native.SetWindowLong(_hwnd, Native.GWL_EXSTYLE, ex);
 
+        _monitor = HomeMonitor();
         BuddyLog.Write($"Started. Windows {Environment.OSVersion.Version}, monitors: {Native.GetSystemMetrics(Native.SM_CMONITORS)}");
         RefreshEnvironment();
         _timer.Start();
@@ -147,8 +149,8 @@ public partial class MainWindow : Window
     {
         if (_taskbar is not { } tb)
         {
-            // No taskbar reported: stand on the bottom edge of the primary screen.
-            var m = Native.MonitorBounds(Native.MonitorFromWindow(_hwnd, Native.MONITOR_DEFAULTTOPRIMARY)) ?? default;
+            // No taskbar on this monitor: stand on its bottom edge.
+            var m = Native.MonitorBounds(_monitor) ?? default;
             return (true, m.Left, m.Right, m.Bottom - height);
         }
 
@@ -222,6 +224,14 @@ public partial class MainWindow : Window
     {
         _engine.EndDrag();
         Native.GetWindowRect(_hwnd, out var me);
+
+        // The cat now lives on whichever monitor it was dropped on, and comes back there next time.
+        _monitor = Native.MonitorFromWindow(_hwnd, Native.MONITOR_DEFAULTTONEAREST);
+        _taskbar = TaskbarTracker.Query(_monitor);
+        _settings.HomeX = (me.Left + me.Right) / 2;
+        _settings.HomeY = (me.Top + me.Bottom) / 2;
+        CurrentApp.SaveSettings();
+
         var zone = WalkZone(me.Width, me.Height);
         _walkOffset = me.Left - zone.Left;  // walk on from wherever it was dropped
         _fallY = me.Top;
@@ -232,8 +242,10 @@ public partial class MainWindow : Window
 
     private void RefreshEnvironment()
     {
-        _taskbar = TaskbarTracker.Query();
-        _hideReason = FullscreenDetector.HideReason(_hwnd);
+        if (Native.MonitorBounds(_monitor) is null)
+            _monitor = HomeMonitor();  // its monitor was unplugged
+        _taskbar = TaskbarTracker.Query(_monitor);
+        _hideReason = FullscreenDetector.HideReason(_hwnd, _monitor);
 
         var dpi = VisualTreeHelper.GetDpi(this);
         Native.GetWindowRect(_hwnd, out var me);
@@ -257,7 +269,8 @@ public partial class MainWindow : Window
             $"Taskbar showing: {YesNo(_taskbar?.IsVisible)}",
             $"Taskbar now:     {_taskbar?.Bounds}",
             $"Taskbar docked:  {_taskbar?.DockedBounds}",
-            $"Monitor:         {_taskbar?.Monitor}",
+            $"Cat's monitor:   {Native.MonitorBounds(_monitor)}",
+            $"Taskbar monitor: {_taskbar?.Monitor}",
             $"Buddy window:    {me}",
             $"DPI scale:       {dpi.DpiScaleX:0.00} ({dpi.PixelsPerInchX:0} dpi)",
             $"Monitors:        {Native.GetSystemMetrics(Native.SM_CMONITORS)}",
@@ -266,6 +279,14 @@ public partial class MainWindow : Window
             $"Log file:        {BuddyLog.FilePath}");
 
         _diagnostics?.Refresh(Diagnostics);
+    }
+
+    /// <summary>The monitor the cat was last dropped on, or the primary one if that's gone.</summary>
+    private IntPtr HomeMonitor()
+    {
+        // With no saved spot, (0, 0) is always on the primary monitor.
+        var home = new Native.POINT { X = _settings.HomeX ?? 0, Y = _settings.HomeY ?? 0 };
+        return Native.MonitorFromPoint(home, Native.MONITOR_DEFAULTTOPRIMARY);
     }
 
     private static string YesNo(bool? value) => value switch { true => "yes", false => "no", null => "?" };

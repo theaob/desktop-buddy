@@ -21,5 +21,8 @@ Get the build the same way as in phase 0: download the `DesktopBuddy-win-x64` ar
 | 12 | Right-click the cat | Menu with Settings, Pause, Hide, Diagnostics, Exit; it closes when you click elsewhere | |
 | 13 | Everything from phase 0 still holds | Stands on the taskbar, hides in fullscreen, doesn't steal focus | |
 | 14 | Leave it running for a workday | Task Manager shows it under 1% CPU | |
+| 15 | With two monitors, drag the cat onto the other one and drop it | It stays there, walking on that monitor's taskbar (or its bottom edge if that monitor has no taskbar) | |
+| 16 | Exit and start it again | It comes back on the monitor you last dropped it on | |
+| 17 | Play a fullscreen video on the other monitor | The cat stays visible on its own monitor | |
 
 Settings live in `%APPDATA%\DesktopBuddy\settings.json`; the log is `%LOCALAPPDATA%\DesktopBuddy\buddy.log`.

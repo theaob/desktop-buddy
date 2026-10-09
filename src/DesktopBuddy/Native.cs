@@ -87,6 +87,12 @@ internal static class Native
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr FindWindowEx(IntPtr parent, IntPtr childAfter, string lpClassName, string? lpWindowName);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr MonitorFromPoint(POINT point, uint flags);
+
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);

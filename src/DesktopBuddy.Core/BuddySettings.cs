@@ -21,6 +21,11 @@ public sealed class BuddySettings
 
     public CatPattern Pattern { get; set; }
 
+    /// <summary>A point on the monitor the cat was last dropped on (physical pixels), so it comes back there.</summary>
+    public int? HomeX { get; set; }
+
+    public int? HomeY { get; set; }
+
     [JsonIgnore]
     public CatLook Look => new(Fur, Pattern);
 
@@ -31,6 +36,8 @@ public sealed class BuddySettings
         Paused = Paused,
         Fur = Enum.IsDefined(Fur) ? Fur : default,
         Pattern = Enum.IsDefined(Pattern) ? Pattern : default,
+        HomeX = HomeX,
+        HomeY = HomeY,
     };
 }
 
