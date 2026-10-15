@@ -16,8 +16,8 @@ internal sealed class AppWatcher : IDisposable
     private readonly IntPtr _winEventHook;
     private readonly uint _ownProcess = (uint)Environment.ProcessId;
 
-    /// <summary>Raised with the window that did something.</summary>
-    public event Action<IntPtr>? WindowActivity;
+    /// <summary>Raised with the window that did something, and whether it is flashing for attention.</summary>
+    public event Action<IntPtr, bool>? WindowActivity;
 
     public AppWatcher(IntPtr hwnd)
     {
@@ -44,17 +44,17 @@ internal sealed class AppWatcher : IDisposable
     private IntPtr OnMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (msg == _shellHookMessage && (int)wParam is Native.HSHELL_WINDOWCREATED or Native.HSHELL_FLASH)
-            Report(lParam);
+            Report(lParam, urgent: (int)wParam == Native.HSHELL_FLASH);
         return IntPtr.Zero;
     }
 
     private void OnWinEvent(IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint thread, uint time)
     {
         if (idObject == 0)  // OBJID_WINDOW: the window itself, not a part of it
-            Report(hwnd);
+            Report(hwnd, urgent: false);
     }
 
-    private void Report(IntPtr window)
+    private void Report(IntPtr window, bool urgent)
     {
         if (window == IntPtr.Zero || !Native.IsWindowVisible(window))
             return;
@@ -63,7 +63,7 @@ internal sealed class AppWatcher : IDisposable
             return;
         try
         {
-            WindowActivity?.Invoke(window);
+            WindowActivity?.Invoke(window, urgent);
         }
         catch (Exception e)
         {

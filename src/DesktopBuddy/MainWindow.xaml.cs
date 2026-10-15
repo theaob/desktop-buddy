@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private const double HuntReachDip = 130;
     private const double HuntHeightDip = 140;
     private const double MaxLeapDip = 110;
+    private const double StartleHopSeconds = 0.35;
 
     private readonly BuddySettings _settings;
     private readonly BehaviorEngine _engine = new();
@@ -157,7 +158,9 @@ public partial class MainWindow : Window
         Move(elapsed);
 
         bool sweaty = _settings.ReactToCpu && _cpu.Busy;
-        var pose = CatAnimation.PoseFor(_engine.State, _engine.TimeInState, _moving, _engine.Grip);
+        // Gallops after the yarn, and when a busy PC has it hurrying along.
+        bool running = _engine.State == BuddyState.Play || (_engine.State == BuddyState.Walk && sweaty);
+        var pose = CatAnimation.PoseFor(_engine.State, _engine.TimeInState, _moving, _engine.Grip, running);
         int bubble = CatAnimation.SnotBubble(_engine.State, _engine.TimeInState);
         CatImage.Source = CatSprite.Frame(pose, _settings.Look, sweaty, bubble);
         Flip.ScaleX = _direction;
@@ -241,7 +244,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnWindowActivity(IntPtr window)
+    private void OnWindowActivity(IntPtr window, bool urgent)
     {
         if (!_settings.WatchWindows || UserHidden || _hideReason != null)
             return;
@@ -249,7 +252,7 @@ public partial class MainWindow : Window
             return;
         if (!Native.GetWindowRect(window, out var rect) || !Native.GetWindowRect(_hwnd, out var me))
             return;
-        if (_engine.Notice())
+        if (_engine.Notice(urgent))
             _direction = (rect.Left + rect.Right) / 2 >= (me.Left + me.Right) / 2 ? 1 : -1;
     }
 
@@ -311,6 +314,10 @@ public partial class MainWindow : Window
         else if (_engine.State == BuddyState.Celebrate)
         {
             y -= (int)(Math.Abs(Math.Sin(_engine.TimeInState * Math.PI * 2.5)) * 10 * scale);  // happy hops
+        }
+        else if (_engine.State == BuddyState.Startle && _engine.TimeInState < StartleHopSeconds)
+        {
+            y -= (int)(Math.Sin(_engine.TimeInState / StartleHopSeconds * Math.PI) * 8 * scale);  // jumps on the spot
         }
 
         if (x != me.Left || y != me.Top)

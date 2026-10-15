@@ -282,4 +282,56 @@ public class BehaviorEngineTests
         Assert.True(engine.Notice());
         Assert.Equal(BuddyState.Look, engine.State);
     }
+
+    [Theory]
+    [InlineData(BuddyState.Groom)]
+    [InlineData(BuddyState.Loaf)]
+    public void Grooms_and_loafs_sometimes_then_carries_on(BuddyState activity)
+    {
+        var engine = NewEngine();
+        Assert.True(RunUntil(engine, activity));
+        Assert.True(RunUntil(engine, BuddyState.Sit, 30));
+    }
+
+    [Fact]
+    public void A_few_quick_pets_roll_it_onto_its_back()
+    {
+        var engine = NewEngine();
+        engine.Pet();
+        Run(engine, 0.5);
+        engine.Pet();
+        Run(engine, 0.5);
+        engine.Pet();
+        Assert.Equal(BuddyState.BellyUp, engine.State);
+
+        engine.Pet();  // more rubs keep it there
+        Assert.Equal(BuddyState.BellyUp, engine.State);
+
+        Run(engine, BehaviorEngine.BellyUpSeconds + Frame);
+        Assert.Equal(BuddyState.Sit, engine.State);
+    }
+
+    [Fact]
+    public void Slow_pets_never_roll_it_over()
+    {
+        var engine = NewEngine();
+        for (int i = 0; i < 4; i++)
+        {
+            engine.Pet();
+            Assert.Equal(BuddyState.Petted, engine.State);
+            Run(engine, BehaviorEngine.BellyUpWithinSeconds / 2 + Frame);
+        }
+    }
+
+    [Fact]
+    public void A_flashing_window_startles_it()
+    {
+        var engine = NewEngine();
+
+        Assert.True(engine.Notice(urgent: true));
+        Assert.Equal(BuddyState.Startle, engine.State);
+
+        Run(engine, BehaviorEngine.StartleSeconds + Frame);
+        Assert.Equal(BuddyState.Sit, engine.State);
+    }
 }

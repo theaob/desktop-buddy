@@ -18,6 +18,11 @@ Get the build the same way as before: download the `DesktopBuddy-win-x64` artifa
 | 8a | Drag the cat up high and let go | It flails its legs on the way down, squashes for a moment on landing, then sits | |
 | 8b | Leave the PC until the cat naps, then move the mouse | It wakes slowly: a drowsy blink, a long stretch, a yawn, then it sits | |
 | 8c | Watch the cat sit for a while | Now and then it dozes off sitting up, eyes shut, with a snot bubble swelling and shrinking at its nose; it also has one while napping, and the bubble pops when it wakes | |
+| 8d | Watch the cat sit for a while | Now and then it flicks its tail, grooms (licks a paw and wipes its face), or settles into a loaf with its paws tucked and slow-blinks | |
+| 8e | Click the cat three times quickly | It rolls onto its back with its paws in the air for a few seconds, then sits up | |
+| 8f | Make an app flash in the taskbar (for example a chat message arriving in the background) | The cat jumps on the spot with its fur on end and its tail puffed up, then sits | |
+| 8g | Leave the PC long enough for a nap, then wait another minute | It curls up into a ball, snot bubble still going | |
+| 8h | Run something heavy, or watch it chase the yarn | It gallops instead of walking | |
 | 9 | Right-click the cat or the tray icon, Start focus timer | A bubble above the cat counts down; click the bubble to hide it. When it ends the cat hops with hearts and says well done | |
 | 10 | Start a focus timer, then Stop focus timer | The countdown disappears; the cat doesn't follow or hunt the mouse during a session | |
 | 11 | In Settings, set break reminders to 5 min and keep working | After 5 minutes of use a bubble suggests a break. Stepping away for 5 minutes resets the count | |

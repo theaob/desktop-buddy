@@ -137,7 +137,7 @@ public class CatTests
     [Fact]
     public void Sweat_drop_only_covers_empty_pixels()
     {
-        foreach (var pose in new[] { CatPose.WalkA, CatPose.WalkB, CatPose.Sit, CatPose.SitBlink, CatPose.LookUp })
+        foreach (var pose in new[] { CatPose.WalkA, CatPose.WalkB, CatPose.Sit, CatPose.SitBlink, CatPose.LookUp, CatPose.SitTail, CatPose.RunA, CatPose.RunB })
         {
             var dry = CatPixels.Argb(pose);
             var wet = CatPixels.Argb(pose, sweaty: true);
@@ -165,6 +165,7 @@ public class CatTests
     [InlineData(CatPose.NapA)]
     [InlineData(CatPose.NapB)]
     [InlineData(CatPose.Drowsy)]
+    [InlineData(CatPose.Curl)]
     public void Snot_bubble_sits_in_empty_space_beside_the_nose(CatPose pose)
     {
         var plain = CatPixels.Argb(pose);
@@ -182,5 +183,41 @@ public class CatTests
     public void Open_eyed_poses_never_get_a_snot_bubble()
     {
         Assert.Equal(CatPixels.Argb(CatPose.WalkA), CatPixels.Argb(CatPose.WalkA, bubble: 3));
+    }
+
+    [Fact]
+    public void Sitting_cat_swishes_its_tail_now_and_then()
+    {
+        var poses = Enumerable.Range(0, 40).Select(i => CatAnimation.PoseFor(BuddyState.Sit, i * 0.1)).ToList();
+        Assert.Contains(CatPose.SitTail, poses);
+        Assert.Contains(CatPose.Sit, poses);
+    }
+
+    [Fact]
+    public void Grooming_loafing_and_rolling_over_have_their_own_poses()
+    {
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Groom, 0.1), new[] { CatPose.GroomA, CatPose.GroomB });
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Groom, 0.5), new[] { CatPose.GroomA, CatPose.GroomB });
+        Assert.Equal(CatPose.Loaf, CatAnimation.PoseFor(BuddyState.Loaf, 1));
+        Assert.Equal(CatPose.LoafBlink, CatAnimation.PoseFor(BuddyState.Loaf, 4.8));
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.BellyUp, 0.1), new[] { CatPose.BellyA, CatPose.BellyB });
+        Assert.Equal(CatPose.Startle, CatAnimation.PoseFor(BuddyState.Startle, 0.5));
+    }
+
+    [Fact]
+    public void A_long_nap_curls_up()
+    {
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Nap, 10), new[] { CatPose.NapA, CatPose.NapB });
+        Assert.Equal(CatPose.Curl, CatAnimation.PoseFor(BuddyState.Nap, CatAnimation.CurlAfterSeconds + 1));
+        Assert.Contains(3, Enumerable.Range(0, 16).Select(i => CatAnimation.SnotBubble(BuddyState.Nap, CatAnimation.CurlAfterSeconds + i * 0.45)));
+    }
+
+    [Fact]
+    public void A_hurrying_cat_gallops()
+    {
+        Assert.Equal(CatPose.RunA, CatAnimation.PoseFor(BuddyState.Walk, 0, running: true));
+        Assert.Equal(CatPose.RunB, CatAnimation.PoseFor(BuddyState.Walk, 0.15, running: true));
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Play, 0.1, moving: true, running: true), new[] { CatPose.RunA, CatPose.RunB });
+        Assert.Equal(CatPose.Bat, CatAnimation.PoseFor(BuddyState.Play, 0.1, moving: false, running: true));
     }
 }

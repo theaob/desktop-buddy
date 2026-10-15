@@ -13,6 +13,10 @@ public enum BuddyState
     WakeUp,     // slowly waking from a nap: blinks, stretches, yawns
     Landing,    // squashed for a moment after a drop or a pounce
     Doze,       // a short snooze sitting up, snot bubble and all
+    Groom,      // licks a paw and wipes its face
+    Loaf,       // paws tucked under, content
+    BellyUp,    // rolls over to show its belly after a lot of petting
+    Startle,    // fur on end for a moment when a window flashes for attention
 }
 
 /// <summary>Where the user grabbed the cat, which decides how it hangs while carried.</summary>
@@ -32,6 +36,13 @@ public sealed class BehaviorEngine
     public const double CelebrateSeconds = 3;
     public const double WakeUpSeconds = 2.8;
     public const double LandingSeconds = 0.4;
+    public const double GroomSeconds = 3.2;
+    public const double BellyUpSeconds = 3.2;
+    public const double StartleSeconds = 1.2;
+
+    // This many clicks within the window rolls the cat onto its back.
+    public const int BellyUpPets = 3;
+    public const double BellyUpWithinSeconds = 4;
 
     // Any input within this window wakes a napping cat.
     public const double WakeIdleSeconds = 2;
@@ -47,6 +58,8 @@ public sealed class BehaviorEngine
     private double _moodTimeLeft;
     private double _huntCooldown;
     private double _lookCooldown;
+    private double _clock;
+    private readonly Queue<double> _petTimes = new();
 
     public BehaviorEngine(Random? random = null)
     {
@@ -79,13 +92,15 @@ public sealed class BehaviorEngine
 
     /// <summary>States the cat picks for itself, which napping, hunting and pausing may interrupt.</summary>
     private bool IsIdleLife => State is BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch
-        or BuddyState.Look or BuddyState.Follow or BuddyState.Play or BuddyState.Doze;
+        or BuddyState.Look or BuddyState.Follow or BuddyState.Play or BuddyState.Doze
+        or BuddyState.Groom or BuddyState.Loaf;
 
     private bool IsMoving => State is BuddyState.Walk or BuddyState.Follow or BuddyState.Play;
 
     public void Tick(double elapsedSeconds, double userIdleSeconds)
     {
         TimeInState += elapsedSeconds;
+        _clock += elapsedSeconds;
         _huntCooldown = Math.Max(0, _huntCooldown - elapsedSeconds);
         _lookCooldown = Math.Max(0, _lookCooldown - elapsedSeconds);
 
@@ -109,6 +124,14 @@ public sealed class BehaviorEngine
                 return;
             case BuddyState.Landing:
                 if (TimeInState >= LandingSeconds)
+                    Enter(BuddyState.Sit);
+                return;
+            case BuddyState.BellyUp:
+                if (TimeInState >= BellyUpSeconds)
+                    Enter(BuddyState.Sit);
+                return;
+            case BuddyState.Startle:
+                if (TimeInState >= StartleSeconds)
                     Enter(BuddyState.Sit);
                 return;
             case BuddyState.Stalk:
@@ -146,6 +169,7 @@ public sealed class BehaviorEngine
         bool done = State switch
         {
             BuddyState.Scratch => TimeInState >= ScratchSeconds,
+            BuddyState.Groom => TimeInState >= GroomSeconds,
             BuddyState.Look => TimeInState >= LookSeconds,
             _ => (_moodTimeLeft -= elapsedSeconds) <= 0,
         };
@@ -161,33 +185,49 @@ public sealed class BehaviorEngine
     {
         double r = _random.NextDouble();
         if (!WalkingAllowed)
-            return r < 0.2 ? BuddyState.Scratch : r < 0.35 ? BuddyState.Doze : BuddyState.Sit;
-        if (r < 0.42) return BuddyState.Walk;
-        if (r < 0.53) return BuddyState.Scratch;
-        if (r < 0.62) return BuddyState.Doze;
-        if (r < 0.71 && PlayAllowed) return BuddyState.Play;
-        if (r < 0.80 && MouseGamesAllowed && CursorOnMonitor) return BuddyState.Follow;
+            return r < 0.15 ? BuddyState.Scratch : r < 0.3 ? BuddyState.Groom : r < 0.42 ? BuddyState.Doze
+                : r < 0.55 ? BuddyState.Loaf : BuddyState.Sit;
+        if (r < 0.36) return BuddyState.Walk;
+        if (r < 0.44) return BuddyState.Scratch;
+        if (r < 0.52) return BuddyState.Groom;
+        if (r < 0.59) return BuddyState.Doze;
+        if (r < 0.66) return BuddyState.Loaf;
+        if (r < 0.74 && PlayAllowed) return BuddyState.Play;
+        if (r < 0.82 && MouseGamesAllowed && CursorOnMonitor) return BuddyState.Follow;
         return BuddyState.Sit;
     }
 
-    /// <summary>A click on the cat. Wakes it from a nap too.</summary>
+    /// <summary>A click on the cat. Wakes it from a nap too; a few in a row and it rolls over for belly rubs.</summary>
     public void Pet()
     {
         if (State is BuddyState.Dragged or BuddyState.Falling or BuddyState.Pounce)
             return;
+        _petTimes.Enqueue(_clock);
+        while (_petTimes.Count > 0 && _clock - _petTimes.Peek() > BellyUpWithinSeconds)
+            _petTimes.Dequeue();
+        if (State == BuddyState.BellyUp)
+            return;
+        if (_petTimes.Count >= BellyUpPets && State != BuddyState.Nap)
+        {
+            _petTimes.Clear();
+            Enter(BuddyState.BellyUp);
+            return;
+        }
         Enter(BuddyState.Petted);
     }
 
     /// <summary>
-    /// A window opened, moved or flashed on the cat's monitor.
-    /// Returns true when the cat turns to look, so the caller can face it that way.
+    /// A window opened, moved or flashed on the cat's monitor. A flash asking for attention
+    /// (<paramref name="urgent"/>) startles it; anything else makes it look.
+    /// Returns true when the cat reacts, so the caller can face it that way.
     /// </summary>
-    public bool Notice()
+    public bool Notice(bool urgent = false)
     {
-        if (_lookCooldown > 0 || State is not (BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch or BuddyState.Follow or BuddyState.Doze))
+        if (_lookCooldown > 0 || State is not (BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch or BuddyState.Follow
+            or BuddyState.Doze or BuddyState.Groom or BuddyState.Loaf))
             return false;
         _lookCooldown = LookCooldownSeconds;
-        Enter(BuddyState.Look);
+        Enter(urgent ? BuddyState.Startle : BuddyState.Look);
         return true;
     }
 
@@ -231,6 +271,7 @@ public sealed class BehaviorEngine
             BuddyState.Follow => Between(6, 12),
             BuddyState.Play => Between(10, 20),
             BuddyState.Doze => Between(8, 20),
+            BuddyState.Loaf => Between(10, 25),
             _ => 0,
         };
     }
