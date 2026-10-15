@@ -33,6 +33,9 @@ public sealed class BuddySettings
 
     public bool PlayWithYarn { get; set; } = true;
 
+    /// <summary>Now and then roll over and ask for belly scratches.</summary>
+    public bool AskForScratches { get; set; } = true;
+
     /// <summary>Hurry and sweat when the PC is busy.</summary>
     public bool ReactToCpu { get; set; } = true;
 
@@ -61,6 +64,7 @@ public sealed class BuddySettings
         ChaseMouse = ChaseMouse,
         WatchWindows = WatchWindows,
         PlayWithYarn = PlayWithYarn,
+        AskForScratches = AskForScratches,
         ReactToCpu = ReactToCpu,
         Fur = Enum.IsDefined(Fur) ? Fur : default,
         Pattern = Enum.IsDefined(Pattern) ? Pattern : default,
