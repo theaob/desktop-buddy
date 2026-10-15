@@ -151,6 +151,16 @@ internal sealed class SettingsWindow : Window
             ShowPreview();
             app.ApplyLook();
         });
+        // Fur colour and pattern only apply to the original cat; the designed cats have their own coats.
+        void ShowColourChoices() => fur.IsEnabled = pattern.IsEnabled = settings.Breed == CatBreed.Original;
+        var breed = Choice(BreedNames, settings.Breed, gap, value =>
+        {
+            settings.Breed = value;
+            ShowColourChoices();
+            ShowPreview();
+            app.ApplyLook();
+        });
+        ShowColourChoices();
 
         var close = new Button { Content = "Close", IsCancel = true, IsDefault = true, Padding = new Thickness(16, 4, 16, 4), HorizontalAlignment = HorizontalAlignment.Right };
         close.Click += (_, _) => Close();
@@ -170,14 +180,31 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(breaks);
         panel.Children.Add(focusLabel);
         panel.Children.Add(focus);
-        panel.Children.Add(new TextBlock { Text = "Fur colour" });
+        panel.Children.Add(new TextBlock { Text = "Cat" });
+        panel.Children.Add(breed);
+        panel.Children.Add(new TextBlock { Text = "Fur colour (original cat)" });
         panel.Children.Add(fur);
-        panel.Children.Add(new TextBlock { Text = "Pattern" });
+        panel.Children.Add(new TextBlock { Text = "Pattern (original cat)" });
         panel.Children.Add(pattern);
         panel.Children.Add(preview);
         panel.Children.Add(close);
         Content = panel;
     }
+
+    private static readonly Dictionary<CatBreed, string> BreedNames = new()
+    {
+        [CatBreed.Original] = "Original",
+        [CatBreed.BeanCartoon] = "Bean, ginger (cartoon)",
+        [CatBreed.WispCartoon] = "Wisp, black (cartoon)",
+        [CatBreed.PuffCartoon] = "Puff, fluffy colorpoint (cartoon)",
+        [CatBreed.PebbleCartoon] = "Pebble, tuxedo (cartoon)",
+        [CatBreed.SproutCartoon] = "Sprout, calico kitten (cartoon)",
+        [CatBreed.BeanRealistic] = "Bean, ginger tabby (realistic)",
+        [CatBreed.WispRealistic] = "Wisp, black (realistic)",
+        [CatBreed.PuffRealistic] = "Puff, long-haired colorpoint (realistic)",
+        [CatBreed.PebbleRealistic] = "Pebble, tuxedo (realistic)",
+        [CatBreed.SproutRealistic] = "Sprout, calico kitten (realistic)",
+    };
 
     private static readonly Dictionary<FurColor, string> FurNames = new()
     {

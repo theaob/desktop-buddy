@@ -6,8 +6,28 @@ public enum FurColor { BlueGrey, Ginger, Charcoal, Cocoa, Cream, Snow }
 /// <summary>The cat's coat pattern, picked in Settings.</summary>
 public enum CatPattern { Tabby, Solid, Socks, Patches }
 
-/// <summary>How the cat looks. The default is a blue-grey tabby.</summary>
-public readonly record struct CatLook(FurColor Fur, CatPattern Pattern);
+/// <summary>Which cat it is, picked in Settings. The original cat takes the fur colour and pattern; the others have their own coats.</summary>
+public enum CatBreed
+{
+    Original,
+    BeanCartoon, WispCartoon, PuffCartoon, PebbleCartoon, SproutCartoon,
+    BeanRealistic, WispRealistic, PuffRealistic, PebbleRealistic, SproutRealistic,
+}
+
+/// <summary>How the cat looks. The default is the original cat as a blue-grey tabby.</summary>
+public readonly record struct CatLook(FurColor Fur, CatPattern Pattern, CatBreed Breed = CatBreed.Original);
+
+/// <summary>
+/// A designed cat's art: its colours, a 30x20 grid for every pose, where a sweat drop fits beside the head,
+/// where a snot bubble hangs off the nose, and where the head sits in the sitting frame for the tray icon.
+/// </summary>
+internal sealed record BreedFrames(
+    Dictionary<char, uint> Colors,
+    Dictionary<CatPose, string[]> Frames,
+    Dictionary<CatPose, (int X, int Y)> Sweat,
+    Dictionary<CatPose, (int X, int Y)> Nose,
+    int IconLeft,
+    int IconTop);
 
 /// <summary>
 /// The pixel cat, facing right, as 30x20 character grids (with room beside it for a snot bubble). Drawn for this project: a round-headed
@@ -863,8 +883,18 @@ public static class CatPixels
 
     public static IReadOnlyList<string> Rows(CatPose pose) => Frames[pose];
 
+    /// <summary>A designed cat's grid for a pose; the original cat's grids are <see cref="Rows"/>.</summary>
+    public static IReadOnlyList<string> Rows(CatBreed breed, CatPose pose) =>
+        breed == CatBreed.Original ? Frames[pose] : CatBreedArt.All[breed].Frames[pose];
+
+    /// <summary>A designed cat's colours; the original cat's come from <see cref="ColorsFor"/>.</summary>
+    public static IReadOnlyDictionary<char, uint> BreedColors(CatBreed breed) => CatBreedArt.All[breed].Colors;
+
     /// <summary>A sweat drop beside the head, shown when the PC is busy. Only poses with the head in the usual place get one.</summary>
     private static readonly (int X, int Y)[] SweatDrop = { (11, 1), (10, 2), (11, 2), (12, 2), (10, 3), (11, 3), (12, 3), (11, 4) };
+
+    /// <summary>Top-left of the drop's box; a designed cat's sweat spot says where that corner goes.</summary>
+    private const int SweatLeft = 10, SweatTop = 1;
 
     private static readonly HashSet<CatPose> SweatPoses = new()
     {
@@ -907,29 +937,49 @@ public static class CatPixels
     /// <param name="bubble">Snot bubble size from <see cref="CatAnimation.SnotBubble"/>; ignored on poses with open eyes.</param>
     public static uint[] Argb(CatPose pose, CatLook look = default, bool sweaty = false, int bubble = 0)
     {
+        if (look.Breed != CatBreed.Original && CatBreedArt.All.TryGetValue(look.Breed, out var art))
+            return BreedArgb(art, pose, sweaty, bubble);
+
         var colors = ColorsFor(look);
         var pixels = ToArgb(Frames[pose], colors, 0, 0, Width, Height);
         if (sweaty && SweatPoses.Contains(pose))
             foreach (var (x, y) in SweatDrop)
                 pixels[y * Width + x] = colors['q'];
-        if (Bubbles.TryGetValue(bubble, out var dots) && Nose.TryGetValue(pose, out var nose))
+        AddBubble(pixels, bubble, Nose.TryGetValue(pose, out var nose) ? nose : null);
+        return pixels;
+    }
+
+    private static uint[] BreedArgb(BreedFrames art, CatPose pose, bool sweaty, int bubble)
+    {
+        var pixels = ToArgb(art.Frames[pose], art.Colors, 0, 0, Width, Height);
+        if (sweaty && art.Sweat.TryGetValue(pose, out var spot))
+            foreach (var (x, y) in SweatDrop)
+                pixels[(spot.Y + y - SweatTop) * Width + spot.X + x - SweatLeft] = Palette['q'];
+        AddBubble(pixels, bubble, art.Nose.TryGetValue(pose, out var nose) ? nose : null);
+        return pixels;
+    }
+
+    private static void AddBubble(uint[] pixels, int bubble, (int X, int Y)? spot)
+    {
+        if (spot is { } nose && Bubbles.TryGetValue(bubble, out var dots))
             foreach (var (dx, dy, color) in dots)
                 pixels[(nose.Y - dy) * Width + nose.X + dx] = color;
-        return pixels;
     }
 
     /// <summary>A 16x16 icon: the head from the sitting frame, centred vertically.</summary>
     public static uint[] IconArgb(CatLook look = default)
     {
-        const int left = 11, rows = 12;
-        var head = ToArgb(Frames[CatPose.Sit], ColorsFor(look), left, 0, IconSize, rows);
+        const int rows = 12;
+        var head = look.Breed != CatBreed.Original && CatBreedArt.All.TryGetValue(look.Breed, out var art)
+            ? ToArgb(art.Frames[CatPose.Sit], art.Colors, art.IconLeft, art.IconTop, IconSize, rows)
+            : ToArgb(Frames[CatPose.Sit], ColorsFor(look), 11, 0, IconSize, rows);
         var icon = new uint[IconSize * IconSize];
         int top = (IconSize - rows) / 2;
         Array.Copy(head, 0, icon, top * IconSize, head.Length);
         return icon;
     }
 
-    private static uint[] ToArgb(string[] rows, Dictionary<char, uint> colors, int left, int top, int width, int height)
+    private static uint[] ToArgb(string[] rows, IReadOnlyDictionary<char, uint> colors, int left, int top, int width, int height)
     {
         var pixels = new uint[width * height];
         for (int y = 0; y < height; y++)
