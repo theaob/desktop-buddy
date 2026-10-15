@@ -4,11 +4,12 @@ Each pose is a grid of body-part regions; real.py's coats and shading colour it.
 import math
 
 W, H = 30, 20
+PAD = 8         # shapes are drawn this far past the frame, so a pose that spills over can be moved back in
 GROUND = 18.5   # bottom edge of the paws
 
 # Head templates, facing right. G = face (mask area), x = closed eyelid, m = open mouth, o = tongue.
 HEADS = {
-  'adult': dict(neck=(2, 6), rows={
+  'adult': dict(neck=(3, 6), rows={
     'open': [
       "..F..E....",
       ".FF.EeE...",
@@ -106,18 +107,22 @@ class Canvas:
         self.chunk, self.legw, self.accessory = chunk, legw, accessory
         self.k = 1.0 if kind == 'adult' else 0.78
         self.g = [['.'] * W for _ in range(H)]
+        self.extra = {}   # pixels drawn past the frame edge
     # pose coordinates are written for the adult; the kitten is a scaled-down copy on the same ground
     def X(self, x): return 15 + (x - 15) * self.k
     def Y(self, y): return GROUND - (GROUND - y) * self.k
     def put(self, r, c, ch, under=False):
-        if 0 <= r < H and 0 <= c < W and (not under or self.g[r][c] == '.'):
-            self.g[r][c] = ch
+        if 0 <= r < H and 0 <= c < W:
+            if not under or self.g[r][c] == '.':
+                self.g[r][c] = ch
+        elif not under or (r, c) not in self.extra:
+            self.extra[(r, c)] = ch
     def ellipse(self, cx, cy, rx, ry, ch, angle=0.0, under=False):
         if ch in 'BJ': ry *= self.chunk
         cx, cy, rx, ry = self.X(cx), self.Y(cy), rx * self.k, ry * self.k
         ca, sa = math.cos(math.radians(angle)), math.sin(math.radians(angle))
-        for r in range(H):
-            for c in range(W):
+        for r in range(-PAD, H + PAD):
+            for c in range(-PAD, W + PAD):
                 dx, dy = c + 0.5 - cx, r + 0.5 - cy
                 u, v = dx * ca + dy * sa, -dx * sa + dy * ca
                 if (u / rx) ** 2 + (v / ry) ** 2 <= 1:
@@ -127,8 +132,8 @@ class Canvas:
         pts = [(self.X(x), self.Y(y)) for x, y in pts]
         segs = list(zip(pts, pts[1:]))
         total = sum(math.dist(a, b) for a, b in segs) or 1
-        for r in range(H):
-            for c in range(W):
+        for r in range(-PAD, H + PAD):
+            for c in range(-PAD, W + PAD):
                 p = (c + 0.5, r + 0.5)
                 run = 0
                 for a, b in segs:
@@ -155,7 +160,8 @@ class Canvas:
                     self.put(r0 + i, c0 + j, ch)
         if self.accessory and not flip:
             art, (ar, ac) = self.accessory
-            self.sprite(art, r0 + ar, c0 + ac)
+            if r0 + ar + len(art) <= H - 1:   # leave it off when the head is too low for it to show
+                self.sprite(art, r0 + ar, c0 + ac)
     def sprite(self, art, r0, c0):
         for i, row in enumerate(art):
             for j, ch in enumerate(row):
@@ -204,8 +210,8 @@ def held_belly(cv):
 def startle(cv):
     legs = dict(far=[[(9, 11), (9.5, 15), (10, 18)], [(18, 11), (18, 15), (18, 18)]],
                 near=[[(7.5, 11), (7, 15), (6.5, 18)], [(19.5, 11), (20, 15), (20.5, 18)]])
-    standing(cv, legs, [(5.5, 8.5), (4, 6), (3.5, 3), (3.5, 1)], body_y=9.6, arch=2, head=(21.5, 7.6))
-    cv.line([(4.3, 7), (3.6, 1.2)], 3.4, 2.8, 'T')   # bristled tail
+    standing(cv, legs, [(5.5, 8.5), (4, 6), (3.5, 3.5), (3.5, 2.2)], body_y=9.6, arch=2, head=(21.5, 7.6))
+    cv.line([(4.3, 7), (3.6, 2.4)], 3.4, 2.8, 'T')   # bristled tail
 
 def fall(cv, phase):
     if phase == 0:
@@ -218,27 +224,27 @@ def fall(cv, phase):
         standing(cv, legs, [(5.5, 9), (2.5, 8), (1.5, 5)], body_y=10.2, head=(21.5, 7.8))
 
 def leap(cv):
-    cv.leg([(9, 12), (6, 14.5), (3, 16)], near=False)
-    cv.line([(6, 10.5), (3, 10), (1, 9)], 2.2, 1.4, 'T')
+    cv.leg([(9, 12), (6, 14), (3.5, 15)], near=False)
+    cv.line([(6, 10.5), (3.5, 10), (2, 9)], 2.2, 1.4, 'T')
     cv.ellipse(14, 10.5, 8.2, 2.7, 'B', angle=-14)
     cv.ellipse(15, 12, 5, 0.9, 'C', angle=-14)
     cv.ellipse(8.5, 11.8, 3, 2.5, 'J')
     cv.ellipse(20.5, 8.6, 2.2, 2.2, 'C')
     cv.leg([(20, 8.5), (23.5, 9.5), (26.5, 10.5)], near=False)
-    cv.leg([(8, 12.5), (5, 15.5), (2.5, 17.5)])
+    cv.leg([(8, 12.5), (5.5, 15), (3, 16.3)])
     cv.leg([(20.5, 9.5), (24, 11.5), (27, 12.5)])
     cv.head(22.5, 6.5)
 
 def dangle(cv):
-    cv.leg([(17, 15), (17.5, 17.5), (18, 18.5)], near=False)
-    cv.line([(14.5, 15.5), (14, 17.5), (13.5, 18.5)], 2, 1.4, 'T')
-    cv.ellipse(16, 12.2, 3.0, 4.8, 'B')
-    cv.ellipse(17.2, 12.5, 1.6, 3.5, 'C')
-    cv.ellipse(15.5, 15, 2.6, 2.4, 'J')
-    cv.leg([(18, 10.5), (19, 13), (19.5, 15)], near=False)
-    cv.leg([(17.8, 10.5), (18.5, 13.5), (18.5, 15.5)])
-    cv.leg([(16, 16), (16.5, 18), (16.5, 18.5)])
-    cv.head(15.5, 6.2)
+    cv.leg([(17, 15), (17.5, 16.8), (18, 17.4)], near=False)
+    cv.line([(14.5, 15.5), (14, 16.8), (13.5, 17.4)], 2, 1.4, 'T')
+    cv.ellipse(16, 12.8, 3.0, 4.0, 'B')
+    cv.ellipse(17.2, 13, 1.6, 3.0, 'C')
+    cv.ellipse(15.5, 15, 2.6, 2.0, 'J')
+    cv.leg([(18, 10.8), (19, 13.2), (19.5, 15)], near=False)
+    cv.leg([(17.8, 10.8), (18.5, 13.5), (18.5, 15.5)])
+    cv.leg([(16, 16), (16.5, 17), (16.5, 17.4)])
+    cv.head(15.5, 7.8)
 
 # sitting family
 def sitting(cv, eyes='open', tail='ground', head=(16.5, 8.3), front='down', hind='down', heart=None):
@@ -277,7 +283,7 @@ def groom(cv, phase):
 # lying family
 def lying(cv, eyes='open', head=(21.5, 13.6), breath=0.0, tail='back', rump=0.0, paws=True, zed=None):
     if tail == 'back':
-        cv.line([(6, 16.5), (3, 17.5), (1, 17.6)], 2.2, 1.6, 'T')
+        cv.line([(6, 16.5), (3.5, 17.5), (2.2, 17.6)], 2.2, 1.6, 'T')
     elif tail == 'up':
         cv.line([(5.5, 13), (3.5, 10), (3, 7), (4, 5)], 2.2, 1.6, 'T')
     cv.ellipse(13.5, 15.6 - breath * 0.5 - rump * 0.4, 8.3, 2.8 + breath * 0.5, 'B')
@@ -308,7 +314,7 @@ def curl(cv):
 
 def crouch(cv, phase):
     cv.leg([(17.5, 15.5), (19.5, 17.5), (21.5, 18)], near=False, w=2.0)
-    cv.line([(5.5, 14.5), (3, 15), (0.8, 14 if phase == 0 else 15.5)], 2.2, 1.4, 'T')
+    cv.line([(5.5, 14.5), (3, 15), (2, 14 if phase == 0 else 15.5)], 2.2, 1.4, 'T')
     cv.ellipse(13.2, 15.6 - (0.6 if phase else 0), 8.2, 2.4, 'B', angle=3 if phase else 0)
     cv.ellipse(8, 15.0 - (0.8 if phase else 0), 3.2, 2.6, 'J')
     cv.ellipse(9, 17.6, 2.6, 0.9, 'L')
@@ -343,7 +349,7 @@ def drowsy(cv):
     lying(cv, eyes='closed', head=(21.5, 14.6))
 
 def belly(cv, phase):
-    cv.line([(6, 16.5), (3, 17.5), (1, 17)], 2.2, 1.6, 'T')
+    cv.line([(6, 16.5), (3.5, 17.5), (2.2, 17)], 2.2, 1.6, 'T')
     cv.ellipse(13.5, 16, 8.0, 2.6, 'B')
     cv.ellipse(14, 14.4, 5.5, 1.1, 'C')
     a = 0 if phase == 0 else 1.2
@@ -352,7 +358,7 @@ def belly(cv, phase):
     cv.leg([(17.5, 14.5), (18.5 - a, 11.8), (17.5 - a, 10.5)], near=False)
     cv.leg([(19.5, 14.5), (20.5 + a, 12), (21.5 + a, 11)])
     if cv.headset in ('adult', 'kitten', 'wisp'):
-        cv.head(21.8, 17.2, 'closed', flip=True)
+        cv.head(21.8, 11.5 if cv.kind == 'adult' else 9.0, 'closed', flip=True)
     else:   # a front-facing head just rests on the ground
         cv.head(21.5, 17.6, 'closed')
 
@@ -361,7 +367,7 @@ POSES = {
     'Sit': lambda cv: sitting(cv), 'SitBlink': lambda cv: sitting(cv, eyes='closed'),
     'NapA': lambda cv: lying(cv, eyes='closed', head=(21.5, 14.6), zed=3),
     'NapB': lambda cv: lying(cv, eyes='closed', head=(21.5, 14.6), breath=0.8, zed=2),
-    'PettedA': lambda cv: sitting(cv, eyes='closed', heart=1), 'PettedB': lambda cv: sitting(cv, eyes='closed', heart=0),
+    'PettedA': lambda cv: sitting(cv, eyes='closed', heart=2), 'PettedB': lambda cv: sitting(cv, eyes='closed', heart=1),
     'Dangle': dangle, 'HeldBelly': held_belly, 'Leap': leap,
     'CrouchA': lambda cv: crouch(cv, 0), 'CrouchB': lambda cv: crouch(cv, 1),
     'ScratchA': lambda cv: sitting(cv, eyes='closed', hind='scratchA'),
@@ -378,9 +384,41 @@ POSES = {
     'RunA': lambda cv: run(cv, 0), 'RunB': lambda cv: run(cv, 1),
 }
 
+# Poses where the cat is off the ground, so it can be moved down to keep its ears in the frame.
+AIRBORNE = {'Leap', 'FallA', 'FallB', 'Dangle', 'HeldBelly'}
+
+def overflow(cv):
+    """How far the cat (not hearts or sleep marks) spills past a frame that leaves one pixel for the outline."""
+    pts = [(r, c) for r in range(H) for c in range(W) if cv.g[r][c] not in '.hz']
+    pts += [p for p, ch in cv.extra.items() if ch not in 'hz']
+    rs, cs = [r for r, _ in pts], [c for _, c in pts]
+    return dict(top=max(0, 1 - min(rs)), bottom=max(0, max(rs) - (H - 2)),
+                left=max(0, 1 - min(cs)), right=max(0, max(cs) - (W - 2)))
+
+def fit(cv, name):
+    """Moves a pose that spills over one side back into the frame, keeping grounded cats on the ground."""
+    o = overflow(cv)
+    dx = 0
+    if o['right'] and not o['left']:
+        dx = -o['right']
+    elif o['left'] and not o['right']:
+        dx = o['left']
+    dy = o['top'] if name in AIRBORNE and o['top'] else 0
+    if not (dx or dy):
+        return
+    pixels = {(r, c): cv.g[r][c] for r in range(H) for c in range(W) if cv.g[r][c] != '.'}
+    pixels.update(cv.extra)
+    cv.g = [['.'] * W for _ in range(H)]
+    cv.extra = {}
+    for (r, c), ch in pixels.items():
+        cv.put(r + dy, c + dx, ch)
+    r0, c0, h, w = cv.headbox
+    cv.headbox = (r0 + dy, c0 + dx, h, w)
+
 def pose_canvas(name, kind, **kw):
     cv = Canvas(kind, **kw)
     POSES[name](cv)
+    fit(cv, name)
     return cv
 
 def pose_grid(name, kind, **kw):

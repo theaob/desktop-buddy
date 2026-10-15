@@ -41,7 +41,7 @@ posekit.HEADS['sprout'] = front(
     ["GpGGMnMGGpG", "GGGMMMMMGGG", ".GGGGGGGGG."],
     ["GpGGMnMGGpG", "GGGMmmmMGGG", ".GGGmooGGG."], neck=(5, 9))
 # Wisp: narrow profile head with tall ears and amber eyes
-posekit.HEADS['wisp'] = dict(neck=(2, 7), rows={
+posekit.HEADS['wisp'] = dict(neck=(3, 7), rows={
     'open':   ["..E...E...", ".EeE.EeE..", ".HSHHHHH..", "HHHHHHHHH.", "HHHHHHYYH.", "HHHHHHYKHH", "HHHHHHHHHn", ".HHHHHHHH."],
     'closed': ["..E...E...", ".EeE.EeE..", ".HSHHHHH..", "HHHHHHHHH.", "HHHHHHHHH.", "HHHHHHxxHH", "HHHHHHHHHn", ".HHHHHHHH."],
     'up':     ["..E...E...", ".EeE.EeE..", ".HSHHHHH..", "HHHHHHYKH.", "HHHHHHYYH.", "HHHHHHHHHH", "HHHHHHHHHn", ".HHHHHHHH."],

@@ -69,6 +69,10 @@ def main():
         icon = (0, 0)
         for pose in posekit.POSES:
             cv = posekit.pose_canvas(pose, **kw)
+            spill = {side: n for side, n in posekit.overflow(cv).items() if n}
+            if pose not in posekit.AIRBORNE and spill.get('bottom') == 1:
+                del spill['bottom']   # paws resting on the taskbar edge
+            assert not spill, f'{enum} {pose} is cut off at the frame edge: {spill}'
             img = render(cv.g)
             rows = []
             for y in range(H):
