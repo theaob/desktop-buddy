@@ -21,6 +21,7 @@ public static class CatAnimation
     private const double StridesPerSecond = 8;
     private const double GroomStrokesPerSecond = 3;
     private const double RollsPerSecond = 3;
+    private const double BegWigglesPerSecond = 1.5;
 
     // A long nap ends up curled into a ball.
     public const double CurlAfterSeconds = 60;
@@ -75,6 +76,8 @@ public static class CatAnimation
         BuddyState.Loaf => secondsInState % SlowBlinkEverySeconds >= SlowBlinkEverySeconds - SlowBlinkSeconds ? CatPose.LoafBlink : CatPose.Loaf,
         BuddyState.BellyUp => Alternate(secondsInState * RollsPerSecond, CatPose.BellyA, CatPose.BellyB),
         BuddyState.Startle => CatPose.Startle,
+        BuddyState.AskBelly => Alternate(secondsInState * BegWigglesPerSecond, CatPose.BellyA, CatPose.BellyB),
+        BuddyState.Sulk => CatPose.Loaf,
         BuddyState.Stalk => Alternate(secondsInState * WigglesPerSecond, CatPose.CrouchA, CatPose.CrouchB),
         BuddyState.Pounce => CatPose.Leap,
         BuddyState.Falling => Alternate(secondsInState * FlailsPerSecond, CatPose.FallA, CatPose.FallB),

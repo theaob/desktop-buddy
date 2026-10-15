@@ -18,6 +18,8 @@ public enum BuddyState
     BellyUp,    // rolls over to show its belly after a lot of petting
     Startle,    // fur on end for a moment when a window flashes for attention
     Woken,      // clicked awake from a nap or a doze: jumps, glares at you, then yawns
+    AskBelly,   // lies on its back on its own, asking for belly scratches
+    Sulk,       // nobody scratched its belly; turns its back on you for a moment
 }
 
 /// <summary>Where the user grabbed the cat, which decides how it hangs while carried.</summary>
@@ -41,6 +43,14 @@ public sealed class BehaviorEngine
     public const double BellyUpSeconds = 3.2;
     public const double StartleSeconds = 1.2;
     public const double WokenSeconds = 3;
+    public const double AskBellySeconds = 15;
+    public const double SulkSeconds = 6;
+
+    // Every so often, while the user is around, the cat rolls over and asks for belly scratches.
+    // Only time the user is at the PC counts toward the next ask.
+    public const double AskEveryMinSeconds = 12 * 60;
+    public const double AskEveryMaxSeconds = 25 * 60;
+    public const double AskOnlyWhileIdleUnderSeconds = 60;
 
     // This many clicks within the window rolls the cat onto its back.
     public const int BellyUpPets = 3;
@@ -65,11 +75,14 @@ public sealed class BehaviorEngine
     private double _lookCooldown;
     private double _clock;
     private double _sleepInLeft;
+    private double _askIn;
+    private bool _scratchedOnRequest;
     private readonly Queue<double> _petTimes = new();
 
     public BehaviorEngine(Random? random = null)
     {
         _random = random ?? new Random();
+        _askIn = Between(AskEveryMinSeconds, AskEveryMaxSeconds);
         Enter(BuddyState.Sit);
     }
 
@@ -95,6 +108,11 @@ public sealed class BehaviorEngine
 
     /// <summary>Napping or dozing, so a click or a grab wakes it.</summary>
     public bool Asleep => State is BuddyState.Nap or BuddyState.Doze;
+    /// <summary>Now and then rolling over to ask for belly scratches.</summary>
+    public bool AskForScratchesAllowed { get; set; } = true;
+
+    /// <summary>Seconds of the user being around until the cat next asks for belly scratches.</summary>
+    public double AskInSeconds => _askIn;
 
     /// <summary>The mouse is on the cat's monitor, so following it makes sense.</summary>
     public bool CursorOnMonitor { get; set; }
@@ -140,6 +158,16 @@ public sealed class BehaviorEngine
                 return;
             case BuddyState.BellyUp:
                 if (TimeInState >= BellyUpSeconds)
+                    Enter(_scratchedOnRequest ? BuddyState.Petted : BuddyState.Sit);  // asked for it: gets up purring, hearts and all
+                return;
+            case BuddyState.AskBelly:
+                if (!AskForScratchesAllowed)
+                    Enter(BuddyState.Sit);
+                else if (TimeInState >= AskBellySeconds)
+                    Enter(BuddyState.Sulk);
+                return;
+            case BuddyState.Sulk:
+                if (TimeInState >= SulkSeconds)
                     Enter(BuddyState.Sit);
                 return;
             case BuddyState.Startle:
@@ -173,6 +201,14 @@ public sealed class BehaviorEngine
             || (State == BuddyState.Play && !PlayAllowed))
         {
             Enter(BuddyState.Sit);
+            return;
+        }
+
+        if (AskForScratchesAllowed && userIdleSeconds < AskOnlyWhileIdleUnderSeconds)
+            _askIn -= elapsedSeconds;
+        if (_askIn <= 0 && AskForScratchesAllowed && State is BuddyState.Sit or BuddyState.Walk or BuddyState.Loaf)
+        {
+            AskForScratches();
             return;
         }
 
@@ -231,14 +267,34 @@ public sealed class BehaviorEngine
             _petTimes.Dequeue();
         if (State == BuddyState.BellyUp)
             return;
+        if (State == BuddyState.AskBelly)
+        {
+            // Just what it asked for.
+            _petTimes.Clear();
+            Enter(BuddyState.BellyUp);
+            _scratchedOnRequest = true;
+            return;
+        }
         if (_petTimes.Count >= BellyUpPets)
         {
             _petTimes.Clear();
             Enter(BuddyState.BellyUp);
+            ResetAsk();  // just had its belly rubbed, so no need to ask for a while
             return;
         }
         Enter(BuddyState.Petted);
     }
+
+    /// <summary>Rolls over and asks for belly scratches now, whatever the timer says.</summary>
+    public void AskForScratches()
+    {
+        ResetAsk();
+        if (State is BuddyState.Dragged or BuddyState.Falling or BuddyState.Pounce)
+            return;
+        Enter(BuddyState.AskBelly);
+    }
+
+    private void ResetAsk() => _askIn = Between(AskEveryMinSeconds, AskEveryMaxSeconds);
 
     /// <summary>
     /// A window opened, moved or flashed on the cat's monitor. A flash asking for attention
@@ -286,6 +342,7 @@ public sealed class BehaviorEngine
 
     private void Enter(BuddyState state)
     {
+        _scratchedOnRequest = false;
         State = state;
         TimeInState = 0;
         _moodTimeLeft = state switch

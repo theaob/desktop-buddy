@@ -383,4 +383,89 @@ public class BehaviorEngineTests
         Run(engine, BehaviorEngine.StartleSeconds + Frame);
         Assert.Equal(BuddyState.Sit, engine.State);
     }
+
+    [Fact]
+    public void Asks_for_belly_scratches_after_a_while_of_use()
+    {
+        var engine = NewEngine();
+        Run(engine, BehaviorEngine.AskEveryMinSeconds - 10);
+        Assert.NotEqual(BuddyState.AskBelly, engine.State);
+
+        Assert.True(RunUntil(engine, BuddyState.AskBelly, BehaviorEngine.AskEveryMaxSeconds));
+    }
+
+    [Fact]
+    public void Never_asks_while_the_user_is_away_or_asking_is_off()
+    {
+        var away = NewEngine();
+        away.NapAfterSeconds = double.MaxValue;
+        var off = NewEngine();
+        off.AskForScratchesAllowed = false;
+        for (double t = 0; t < BehaviorEngine.AskEveryMaxSeconds * 2; t += Frame)
+        {
+            away.Tick(Frame, BehaviorEngine.AskOnlyWhileIdleUnderSeconds + 1);
+            off.Tick(Frame, Active);
+            Assert.NotEqual(BuddyState.AskBelly, away.State);
+            Assert.NotEqual(BuddyState.AskBelly, off.State);
+        }
+    }
+
+    [Fact]
+    public void Scratching_when_asked_rolls_it_happily_then_hearts()
+    {
+        var engine = NewEngine();
+        engine.AskForScratches();
+        Assert.Equal(BuddyState.AskBelly, engine.State);
+
+        Run(engine, 2);
+        engine.Pet();
+        Assert.Equal(BuddyState.BellyUp, engine.State);
+
+        Run(engine, BehaviorEngine.BellyUpSeconds + Frame);
+        Assert.Equal(BuddyState.Petted, engine.State);
+        Run(engine, BehaviorEngine.PetSeconds + Frame);
+        Assert.Equal(BuddyState.Sit, engine.State);
+    }
+
+    [Fact]
+    public void Ignored_it_sulks_for_a_moment()
+    {
+        var engine = NewEngine();
+        engine.AskForScratches();
+
+        Run(engine, BehaviorEngine.AskBellySeconds + Frame);
+        Assert.Equal(BuddyState.Sulk, engine.State);
+
+        Run(engine, BehaviorEngine.SulkSeconds + Frame);
+        Assert.Equal(BuddyState.Sit, engine.State);
+    }
+
+    [Fact]
+    public void Stops_asking_when_asking_is_turned_off()
+    {
+        var engine = NewEngine();
+        engine.AskForScratches();
+
+        engine.AskForScratchesAllowed = false;
+        engine.Tick(Frame, Active);
+
+        Assert.Equal(BuddyState.Sit, engine.State);
+    }
+
+    [Fact]
+    public void A_belly_rub_it_did_not_ask_for_puts_off_the_next_ask()
+    {
+        var engine = NewEngine();
+        Run(engine, BehaviorEngine.AskEveryMinSeconds - 60);
+        while (engine.State != BuddyState.Sit)
+            engine.Tick(Frame, Active);
+        engine.Pet();
+        engine.Pet();
+        engine.Pet();
+        Assert.Equal(BuddyState.BellyUp, engine.State);
+        Assert.True(engine.AskInSeconds >= BehaviorEngine.AskEveryMinSeconds);
+
+        Run(engine, BehaviorEngine.BellyUpSeconds + Frame);
+        Assert.Equal(BuddyState.Sit, engine.State);  // no hearts when it didn't ask
+    }
 }

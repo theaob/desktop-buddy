@@ -215,6 +215,14 @@ public class CatTests
     }
 
     [Fact]
+    public void Asking_for_scratches_wiggles_on_its_back_and_sulking_loafs()
+    {
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.AskBelly, 0.1), new[] { CatPose.BellyA, CatPose.BellyB });
+        Assert.NotEqual(CatAnimation.PoseFor(BuddyState.AskBelly, 0.1), CatAnimation.PoseFor(BuddyState.AskBelly, 0.8));
+        Assert.Equal(CatPose.Loaf, CatAnimation.PoseFor(BuddyState.Sulk, 4.8));  // no contented slow-blink
+    }
+
+    [Fact]
     public void A_long_nap_curls_up()
     {
         Assert.Contains(CatAnimation.PoseFor(BuddyState.Nap, 10), new[] { CatPose.NapA, CatPose.NapB });

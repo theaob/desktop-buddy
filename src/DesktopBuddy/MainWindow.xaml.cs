@@ -146,6 +146,9 @@ public partial class MainWindow : Window
         _engine.MouseGamesAllowed = _settings.ChaseMouse && !_focus.IsRunning;
         _engine.PlayAllowed = _settings.PlayWithYarn && !_focus.IsRunning;
         _engine.GrumbleWhenWoken = _settings.GrumbleWhenWoken;
+        // Asks only when it won't talk over a reminder or another bubble.
+        _engine.AskForScratchesAllowed = _settings.AskForScratches && !_focus.IsRunning
+            && (_bubble?.Message is null || _engine.State == BuddyState.AskBelly);
         _engine.CursorOnMonitor = cursorOnMonitor;
         _engine.CursorNear = cursorOnMonitor && Math.Abs(cursorAside) < HuntReachDip && cursorAbove > 4 && cursorAbove < HuntHeightDip;
         _engine.Tick(elapsed, userIdle);
@@ -202,6 +205,14 @@ public partial class MainWindow : Window
     {
         if (from == BuddyState.Play)
             _yarnWindow?.Hide();
+        if (from == BuddyState.AskBelly)
+            EndAsk(scratched: to == BuddyState.BellyUp, sulking: to == BuddyState.Sulk);
+        if (to == BuddyState.AskBelly)
+        {
+            BuddyLog.Write("Asked for belly scratches.");
+            _askMessage = Pick(AskLines);
+            _bubble?.Say(_askMessage, BehaviorEngine.AskBellySeconds);
+        }
 
         if (!Native.GetWindowRect(_hwnd, out var me))
             return;
@@ -215,6 +226,10 @@ public partial class MainWindow : Window
         {
             case BuddyState.Woken:
                 _direction = _cursor.X >= catCenter ? 1 : -1;  // glares at whoever woke it
+                break;
+
+            case BuddyState.Sulk:
+                _direction = _cursor.X >= catCenter ? -1 : 1;  // turns its back on you
                 break;
 
             case BuddyState.Stalk:
@@ -264,7 +279,38 @@ public partial class MainWindow : Window
     {
         if (_bubble is null || _bubble.Message != null)
             return;
-        _bubble.Say(lines[_random.Next(lines.Length)], 3);
+        _bubble.Say(Pick(lines), 3);
+    }
+
+    private static readonly string[] AskLines = { "Belly scratches?", "Scritches, please!", "Rub my belly? Just a little?", "Prrt? Belly?" };
+    private static readonly string[] ThanksLines = { "Purrrrr...", "Mrrp! Thank you!", "Yes, right there!" };
+    private static readonly string[] SulkLines = { "Hmph.", "Fine. Be busy.", "I didn't want scratches anyway." };
+
+    private string? _askMessage;
+
+    private string Pick(string[] lines) => lines[_random.Next(lines.Length)];
+
+    /// <summary>Takes the ask bubble down, with a thank-you or a grumble when that's how it ended.</summary>
+    private void EndAsk(bool scratched, bool sulking)
+    {
+        if (_bubble is null)
+            return;
+        bool stillAsking = _bubble.Message == _askMessage;
+        _askMessage = null;
+        if (scratched)
+        {
+            BuddyLog.Write("Got belly scratches.");
+            _bubble.Say(Pick(ThanksLines), 4);
+        }
+        else if (sulking && (stillAsking || _bubble.Message is null))
+        {
+            BuddyLog.Write("Nobody scratched its belly; sulking.");
+            _bubble.Say(Pick(SulkLines), 4);
+        }
+        else if (stillAsking)
+        {
+            _bubble.Clear();
+        }
     }
 
     private void OnWindowActivity(IntPtr window, bool urgent)
@@ -520,6 +566,7 @@ public partial class MainWindow : Window
             $"Monitors:        {Native.GetSystemMetrics(Native.SM_CMONITORS)}",
             $"Hiding because:  {_hideReason ?? "nothing"}",
             $"CPU load:        {_cpu.Load:P0}{(_cpu.Busy ? " (busy)" : "")}",
+            $"Belly ask in:    {(_settings.AskForScratches ? $"{_engine.AskInSeconds / 60:0.0} min of use" : "off")}",
             $"Focus timer:     {(_focus.IsRunning ? _focus.Display + " left" : "off")}",
             $"Since a break:   {_breaks.WorkedSeconds / 60:0} min of use (reminds every {_settings.BreakEveryMinutes} min)",
             $"Windows:         {Environment.OSVersion.Version}",

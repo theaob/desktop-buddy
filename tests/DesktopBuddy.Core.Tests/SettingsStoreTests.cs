@@ -105,7 +105,7 @@ public sealed class SettingsStoreTests : IDisposable
         var defaults = SettingsStore.Load(SettingsPath);
         Assert.Equal(50, defaults.BreakEveryMinutes);
         Assert.Equal(25, defaults.FocusMinutes);
-        Assert.True(defaults.ChaseMouse && defaults.WatchWindows && defaults.PlayWithYarn && defaults.ReactToCpu
+        Assert.True(defaults.ChaseMouse && defaults.WatchWindows && defaults.PlayWithYarn && defaults.ReactToCpu && defaults.AskForScratches
             && defaults.GrumbleWhenWoken);
 
         Directory.CreateDirectory(_dir);
@@ -116,5 +116,9 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(BuddySettings.MinFocusMinutes, loaded.FocusMinutes);
         Assert.False(loaded.ChaseMouse);
         Assert.True(loaded.WatchWindows);
+
+        loaded.AskForScratches = false;
+        SettingsStore.Save(SettingsPath, loaded);
+        Assert.False(SettingsStore.Load(SettingsPath).AskForScratches);
     }
 }
