@@ -87,7 +87,8 @@ internal sealed class SettingsWindow : Window
         var yarn = Toggle("Play with a yarn ball", settings.PlayWithYarn, v => settings.PlayWithYarn = v);
         var ask = Toggle("Ask for belly scratches now and then", settings.AskForScratches, v => settings.AskForScratches = v);
         var cpu = Toggle("Hurry and sweat when the PC is busy", settings.ReactToCpu, v => settings.ReactToCpu = v);
-        cpu.Margin = gap;
+        var grumble = Toggle("Grumble when woken up", settings.GrumbleWhenWoken, v => settings.GrumbleWhenWoken = v);
+        grumble.Margin = gap;
 
         var breakLabel = new TextBlock();
         var breaks = new Slider
@@ -178,6 +179,7 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(yarn);
         panel.Children.Add(ask);
         panel.Children.Add(cpu);
+        panel.Children.Add(grumble);
         panel.Children.Add(breakLabel);
         panel.Children.Add(breaks);
         panel.Children.Add(focusLabel);

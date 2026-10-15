@@ -38,6 +38,10 @@ public static class CatAnimation
     private const double DrowsyUntil = 0.9;
     private const double StretchUntil = 2.0;
 
+    // Clicked awake: fur on end until the first mark, a glare until the second, then a yawn.
+    private const double WokenStartleUntil = 0.8;
+    private const double WokenGlareUntil = 2.2;
+
     // The snot bubble swells and shrinks with each slow breath, and pops as the cat wakes.
     private static readonly int[] BubbleCycle = { 0, 1, 2, 3, 3, 2, 1, 0 };
     private const double BubbleStepSeconds = 0.45;
@@ -47,7 +51,7 @@ public static class CatAnimation
     public static int SnotBubble(BuddyState state, double secondsInState) => state switch
     {
         BuddyState.Nap or BuddyState.Doze => BubbleCycle[(int)(secondsInState / BubbleStepSeconds) % BubbleCycle.Length],
-        BuddyState.WakeUp when secondsInState < PopSeconds => CatPixels.BubblePop,
+        BuddyState.WakeUp or BuddyState.Woken when secondsInState < PopSeconds => CatPixels.BubblePop,
         _ => 0,
     };
 
@@ -80,6 +84,9 @@ public static class CatAnimation
         BuddyState.Landing => CatPose.Land,
         BuddyState.WakeUp => secondsInState < DrowsyUntil ? CatPose.Drowsy
             : secondsInState < StretchUntil ? CatPose.Stretch
+            : CatPose.Yawn,
+        BuddyState.Woken => secondsInState < WokenStartleUntil ? CatPose.Startle
+            : secondsInState < WokenGlareUntil ? CatPose.Drowsy
             : CatPose.Yawn,
         _ => grip == DragGrip.Belly ? CatPose.HeldBelly : CatPose.Dangle,
     };

@@ -110,6 +110,16 @@ public class CatTests
     }
 
     [Fact]
+    public void A_cat_clicked_awake_jumps_glares_then_yawns()
+    {
+        Assert.Equal(CatPose.Startle, CatAnimation.PoseFor(BuddyState.Woken, 0.2));
+        Assert.Equal(CatPose.Drowsy, CatAnimation.PoseFor(BuddyState.Woken, 1.5));
+        Assert.Equal(CatPose.Yawn, CatAnimation.PoseFor(BuddyState.Woken, 2.6));
+        Assert.Equal(CatPixels.BubblePop, CatAnimation.SnotBubble(BuddyState.Woken, 0.1));
+        Assert.Equal(0, CatAnimation.SnotBubble(BuddyState.Woken, 1));
+    }
+
+    [Fact]
     public void New_states_pick_their_poses()
     {
         Assert.Contains(CatAnimation.PoseFor(BuddyState.Scratch, 0.1), new[] { CatPose.ScratchA, CatPose.ScratchB });

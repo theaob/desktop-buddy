@@ -145,6 +145,7 @@ public partial class MainWindow : Window
         _engine.WalkingAllowed = !_settings.Paused && IsHorizontalTaskbar;
         _engine.MouseGamesAllowed = _settings.ChaseMouse && !_focus.IsRunning;
         _engine.PlayAllowed = _settings.PlayWithYarn && !_focus.IsRunning;
+        _engine.GrumbleWhenWoken = _settings.GrumbleWhenWoken;
         // Asks only when it won't talk over a reminder or another bubble.
         _engine.AskForScratchesAllowed = _settings.AskForScratches && !_focus.IsRunning
             && (_bubble?.Message is null || _engine.State == BuddyState.AskBelly);
@@ -218,8 +219,15 @@ public partial class MainWindow : Window
         double scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
         int catCenter = (me.Left + me.Right) / 2;
 
+        if (_settings.GrumbleWhenWoken && from is BuddyState.Nap or BuddyState.Doze && to is BuddyState.Woken or BuddyState.Dragged)
+            Grumble(to == BuddyState.Dragged ? GrabbedAwakeLines : WokenLines);
+
         switch (to)
         {
+            case BuddyState.Woken:
+                _direction = _cursor.X >= catCenter ? 1 : -1;  // glares at whoever woke it
+                break;
+
             case BuddyState.Sulk:
                 _direction = _cursor.X >= catCenter ? -1 : 1;  // turns its back on you
                 break;
@@ -257,6 +265,21 @@ public partial class MainWindow : Window
                 break;
             }
         }
+    }
+
+    private static readonly string[] WokenLines =
+    {
+        "Mrrp?!", "Hey! I was napping.", "Five more minutes...", "Rude.", "Mmf. What?", "I was having a dream about tuna.",
+    };
+
+    private static readonly string[] GrabbedAwakeLines = { "Hey! Put me down!", "Mrrrow?!", "Where are we going?" };
+
+    /// <summary>A short line from a rudely woken cat, unless the bubble is busy with a reminder or the focus countdown.</summary>
+    private void Grumble(string[] lines)
+    {
+        if (_bubble is null || _bubble.Message != null)
+            return;
+        _bubble.Say(Pick(lines), 3);
     }
 
     private static readonly string[] AskLines = { "Belly scratches?", "Scritches, please!", "Rub my belly? Just a little?", "Prrt? Belly?" };
@@ -361,7 +384,7 @@ public partial class MainWindow : Window
         {
             y -= (int)(Math.Abs(Math.Sin(_engine.TimeInState * Math.PI * 2.5)) * 10 * scale);  // happy hops
         }
-        else if (_engine.State == BuddyState.Startle && _engine.TimeInState < StartleHopSeconds)
+        else if (_engine.State is BuddyState.Startle or BuddyState.Woken && _engine.TimeInState < StartleHopSeconds)
         {
             y -= (int)(Math.Sin(_engine.TimeInState / StartleHopSeconds * Math.PI) * 8 * scale);  // jumps on the spot
         }
