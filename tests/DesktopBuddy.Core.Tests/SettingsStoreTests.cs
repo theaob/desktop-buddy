@@ -70,10 +70,19 @@ public sealed class SettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Chosen_cat_is_saved_by_name()
+    {
+        SettingsStore.Save(SettingsPath, new BuddySettings { Breed = CatBreed.SproutRealistic });
+
+        Assert.Contains("\"SproutRealistic\"", File.ReadAllText(SettingsPath));
+        Assert.Equal(CatBreed.SproutRealistic, SettingsStore.Load(SettingsPath).Look.Breed);
+    }
+
+    [Fact]
     public void Unknown_fur_or_pattern_falls_back_to_the_default_look()
     {
         Directory.CreateDirectory(_dir);
-        File.WriteAllText(SettingsPath, """{ "Fur": 42, "Pattern": 7 }""");
+        File.WriteAllText(SettingsPath, """{ "Fur": 42, "Pattern": 7, "Breed": 99 }""");
 
         Assert.Equal(default(CatLook), SettingsStore.Load(SettingsPath).Look);
     }

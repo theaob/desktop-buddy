@@ -47,7 +47,7 @@ internal sealed class TrayIcon : IDisposable
         _notifyIcon.DoubleClick += (_, _) => app.ShowSettings();
     }
 
-    /// <summary>Redraws the icon after the fur colour or pattern changes.</summary>
+    /// <summary>Redraws the icon after the cat, fur colour or pattern changes.</summary>
     public void SetLook(CatLook look)
     {
         var (oldIcon, oldHandle) = (_icon, _iconHandle);

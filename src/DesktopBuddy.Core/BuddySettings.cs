@@ -40,13 +40,16 @@ public sealed class BuddySettings
 
     public CatPattern Pattern { get; set; }
 
+    /// <summary>Which cat it is. Fur colour and pattern only change the original cat.</summary>
+    public CatBreed Breed { get; set; }
+
     /// <summary>A point on the monitor the cat was last dropped on (physical pixels), so it comes back there.</summary>
     public int? HomeX { get; set; }
 
     public int? HomeY { get; set; }
 
     [JsonIgnore]
-    public CatLook Look => new(Fur, Pattern);
+    public CatLook Look => new(Fur, Pattern, Breed);
 
     public BuddySettings Normalized() => new()
     {
@@ -61,6 +64,7 @@ public sealed class BuddySettings
         ReactToCpu = ReactToCpu,
         Fur = Enum.IsDefined(Fur) ? Fur : default,
         Pattern = Enum.IsDefined(Pattern) ? Pattern : default,
+        Breed = Enum.IsDefined(Breed) ? Breed : default,
         HomeX = HomeX,
         HomeY = HomeY,
     };
