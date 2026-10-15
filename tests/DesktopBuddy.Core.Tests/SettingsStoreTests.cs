@@ -89,4 +89,22 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(-1500, loaded.HomeX);
         Assert.Equal(900, loaded.HomeY);
     }
+
+    [Fact]
+    public void Phase_two_settings_default_on_and_are_kept_in_range()
+    {
+        var defaults = SettingsStore.Load(SettingsPath);
+        Assert.Equal(50, defaults.BreakEveryMinutes);
+        Assert.Equal(25, defaults.FocusMinutes);
+        Assert.True(defaults.ChaseMouse && defaults.WatchWindows && defaults.PlayWithYarn && defaults.ReactToCpu);
+
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(SettingsPath, """{ "BreakEveryMinutes": 999, "FocusMinutes": 1, "ChaseMouse": false }""");
+        var loaded = SettingsStore.Load(SettingsPath);
+
+        Assert.Equal(BuddySettings.MaxBreakEveryMinutes, loaded.BreakEveryMinutes);
+        Assert.Equal(BuddySettings.MinFocusMinutes, loaded.FocusMinutes);
+        Assert.False(loaded.ChaseMouse);
+        Assert.True(loaded.WatchWindows);
+    }
 }

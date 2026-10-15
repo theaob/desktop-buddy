@@ -65,6 +65,8 @@ public partial class App : Application
         _tray?.SetLook(Settings.Look);
     }
 
+    internal void ToggleFocus() => Buddy?.ToggleFocus();
+
     internal void TogglePaused()
     {
         Settings.Paused = !Settings.Paused;

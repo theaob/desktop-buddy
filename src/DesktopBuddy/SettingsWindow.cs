@@ -72,6 +72,62 @@ internal sealed class SettingsWindow : Window
         };
         ShowNap();
 
+        CheckBox Toggle(string text, bool value, Action<bool> changed)
+        {
+            var box = new CheckBox { Content = text, IsChecked = value, Margin = new Thickness(0, 0, 0, 6) };
+            box.Click += (_, _) =>
+            {
+                changed(box.IsChecked == true);
+                app.SaveSettings();
+            };
+            return box;
+        }
+        var chase = Toggle("Follow and pounce on the mouse", settings.ChaseMouse, v => settings.ChaseMouse = v);
+        var watch = Toggle("Look at windows that open, move or flash", settings.WatchWindows, v => settings.WatchWindows = v);
+        var yarn = Toggle("Play with a yarn ball", settings.PlayWithYarn, v => settings.PlayWithYarn = v);
+        var cpu = Toggle("Hurry and sweat when the PC is busy", settings.ReactToCpu, v => settings.ReactToCpu = v);
+        cpu.Margin = gap;
+
+        var breakLabel = new TextBlock();
+        var breaks = new Slider
+        {
+            Minimum = 0,
+            Maximum = BuddySettings.MaxBreakEveryMinutes,
+            Value = settings.BreakEveryMinutes,
+            TickFrequency = 5,
+            IsSnapToTickEnabled = true,
+            Margin = gap,
+        };
+        void ShowBreaks() => breakLabel.Text = breaks.Value == 0
+            ? "Break reminders: off"
+            : $"Remind me to take a break every {breaks.Value:0} min";
+        breaks.ValueChanged += (_, _) =>
+        {
+            settings.BreakEveryMinutes = (int)breaks.Value;
+            ShowBreaks();
+            app.SaveSettings();
+        };
+        ShowBreaks();
+
+        var focusLabel = new TextBlock();
+        var focus = new Slider
+        {
+            Minimum = BuddySettings.MinFocusMinutes,
+            Maximum = BuddySettings.MaxFocusMinutes,
+            Value = settings.FocusMinutes,
+            TickFrequency = 5,
+            IsSnapToTickEnabled = true,
+            Margin = gap,
+        };
+        void ShowFocus() => focusLabel.Text = $"Focus timer length: {focus.Value:0} min";
+        focus.ValueChanged += (_, _) =>
+        {
+            settings.FocusMinutes = (int)focus.Value;
+            ShowFocus();
+            app.SaveSettings();
+        };
+        ShowFocus();
+
         var preview = new Image
         {
             Width = CatPixels.Width * 3,
@@ -106,6 +162,14 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(speed);
         panel.Children.Add(napLabel);
         panel.Children.Add(nap);
+        panel.Children.Add(chase);
+        panel.Children.Add(watch);
+        panel.Children.Add(yarn);
+        panel.Children.Add(cpu);
+        panel.Children.Add(breakLabel);
+        panel.Children.Add(breaks);
+        panel.Children.Add(focusLabel);
+        panel.Children.Add(focus);
         panel.Children.Add(new TextBlock { Text = "Fur colour" });
         panel.Children.Add(fur);
         panel.Children.Add(new TextBlock { Text = "Pattern" });

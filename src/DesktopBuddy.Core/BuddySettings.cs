@@ -9,6 +9,9 @@ public sealed class BuddySettings
     public const double MaxWalkSpeed = 3;
     public const int MinNapAfterMinutes = 1;
     public const int MaxNapAfterMinutes = 30;
+    public const int MaxBreakEveryMinutes = 120;
+    public const int MinFocusMinutes = 5;
+    public const int MaxFocusMinutes = 90;
 
     /// <summary>Device-independent pixels per animation frame.</summary>
     public double WalkSpeed { get; set; } = 1.5;
@@ -16,6 +19,22 @@ public sealed class BuddySettings
     public int NapAfterMinutes { get; set; } = 5;
 
     public bool Paused { get; set; }
+
+    /// <summary>Minutes of work between break reminders; 0 turns them off.</summary>
+    public int BreakEveryMinutes { get; set; } = 50;
+
+    public int FocusMinutes { get; set; } = 25;
+
+    /// <summary>Sometimes follow the mouse along the taskbar and pounce on it.</summary>
+    public bool ChaseMouse { get; set; } = true;
+
+    /// <summary>Turn to look at windows that open, move or flash.</summary>
+    public bool WatchWindows { get; set; } = true;
+
+    public bool PlayWithYarn { get; set; } = true;
+
+    /// <summary>Hurry and sweat when the PC is busy.</summary>
+    public bool ReactToCpu { get; set; } = true;
 
     public FurColor Fur { get; set; }
 
@@ -34,6 +53,12 @@ public sealed class BuddySettings
         WalkSpeed = double.IsFinite(WalkSpeed) ? Math.Clamp(WalkSpeed, MinWalkSpeed, MaxWalkSpeed) : 1.5,
         NapAfterMinutes = Math.Clamp(NapAfterMinutes, MinNapAfterMinutes, MaxNapAfterMinutes),
         Paused = Paused,
+        BreakEveryMinutes = Math.Clamp(BreakEveryMinutes, 0, MaxBreakEveryMinutes),
+        FocusMinutes = Math.Clamp(FocusMinutes, MinFocusMinutes, MaxFocusMinutes),
+        ChaseMouse = ChaseMouse,
+        WatchWindows = WatchWindows,
+        PlayWithYarn = PlayWithYarn,
+        ReactToCpu = ReactToCpu,
         Fur = Enum.IsDefined(Fur) ? Fur : default,
         Pattern = Enum.IsDefined(Pattern) ? Pattern : default,
         HomeX = HomeX,
