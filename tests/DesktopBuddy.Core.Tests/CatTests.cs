@@ -147,7 +147,7 @@ public class CatTests
     [Fact]
     public void Sweat_drop_only_covers_empty_pixels()
     {
-        foreach (var pose in new[] { CatPose.WalkA, CatPose.WalkB, CatPose.Sit, CatPose.SitBlink, CatPose.LookUp, CatPose.SitTail, CatPose.RunA, CatPose.RunB })
+        foreach (var pose in new[] { CatPose.WalkA, CatPose.WalkB, CatPose.Sit, CatPose.SitBlink, CatPose.LookUp, CatPose.SitTail, CatPose.RunA, CatPose.RunB, CatPose.RunC, CatPose.RunD })
         {
             var dry = CatPixels.Argb(pose);
             var wet = CatPixels.Argb(pose, sweaty: true);
@@ -233,9 +233,10 @@ public class CatTests
     [Fact]
     public void A_hurrying_cat_gallops()
     {
-        Assert.Equal(CatPose.RunA, CatAnimation.PoseFor(BuddyState.Walk, 0, running: true));
-        Assert.Equal(CatPose.RunB, CatAnimation.PoseFor(BuddyState.Walk, 0.15, running: true));
-        Assert.Contains(CatAnimation.PoseFor(BuddyState.Play, 0.1, moving: true, running: true), new[] { CatPose.RunA, CatPose.RunB });
+        var stride = Enumerable.Range(0, 4).Select(i => CatAnimation.PoseFor(BuddyState.Walk, (i + 0.5) / 12, running: true));
+        Assert.Equal(new[] { CatPose.RunA, CatPose.RunB, CatPose.RunC, CatPose.RunD }, stride);
+        Assert.Equal(CatPose.RunA, CatAnimation.PoseFor(BuddyState.Walk, 4.5 / 12, running: true));
+        Assert.Contains(CatAnimation.PoseFor(BuddyState.Play, 0.1, moving: true, running: true), new[] { CatPose.RunA, CatPose.RunB, CatPose.RunC, CatPose.RunD });
         Assert.Equal(CatPose.Bat, CatAnimation.PoseFor(BuddyState.Play, 0.1, moving: false, running: true));
     }
 }

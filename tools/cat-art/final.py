@@ -137,7 +137,7 @@ def frames_for(kind, fluff, coat):
 SHOW = ([('WalkA', 1), ('WalkB', 1)] * 4 + [('Sit', 4), ('SitBlink', 1), ('Sit', 3), ('SitTail', 2), ('Sit', 2)]
         + [('GroomA', 2), ('GroomB', 2)] * 2 + [('LookUp', 4), ('Bat', 3), ('Sit', 2)]
         + [('CrouchA', 1), ('CrouchB', 1)] * 3 + [('Leap', 3), ('Land', 3)]
-        + [('RunA', 1), ('RunB', 1)] * 4 + [('Loaf', 5), ('LoafBlink', 2), ('Loaf', 3)]
+        + [('RunA', 1), ('RunB', 1), ('RunC', 1), ('RunD', 1)] * 4 + [('Loaf', 5), ('LoafBlink', 2), ('Loaf', 3)]
         + [('NapA', 4), ('NapB', 4)] * 2 + [('Curl', 6), ('Drowsy', 4), ('Stretch', 5), ('Yawn', 4)]
         + [('PettedA', 1), ('PettedB', 1)] * 3 + [('BellyA', 2), ('BellyB', 2)] * 2 + [('Startle', 5)]
         + [('ScratchA', 1), ('ScratchB', 1)] * 4 + [('Dangle', 4), ('HeldBelly', 4), ('FallA', 1), ('FallB', 1)] * 1)

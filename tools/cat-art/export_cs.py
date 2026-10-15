@@ -7,7 +7,9 @@ W, H = posekit.W, posekit.H
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'DesktopBuddy.Core', 'CatBreedArt.cs')
 CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-/:;<=>?@[]^_`{|}~"
 SWEAT = [(1, 0), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2), (1, 3)]   # drop shape, as in CatPixels
-SWEAT_POSES = ['WalkA', 'WalkB', 'Sit', 'SitBlink', 'LookUp', 'SitTail', 'RunA', 'RunB']
+# Poses that play one after another share one sweat spot, so the drop stays put while the body moves under it.
+SWEAT_GROUPS = [['WalkA', 'WalkB'], ['Sit', 'SitBlink', 'SitTail'], ['LookUp'], ['RunA', 'RunB', 'RunC', 'RunD']]
+SWEAT_POSES = [p for group in SWEAT_GROUPS for p in group]
 NOSE_POSES = ['SitBlink', 'NapA', 'NapB', 'Drowsy', 'Curl']
 BUBBLE = [(dx, dy) for dx in range(3) for dy in range(3)]
 FRONT_HEADS = {'bean', 'puff', 'pebble', 'sprout'}
@@ -32,15 +34,18 @@ def clear(img, x, y, shape, margin=1):
                 if img.getpixel((px, py))[3]: return False
     return True
 
-def sweat_spot(img, head):
-    r0, c0, h, w = head
-    for y in range(max(0, r0 - 1), r0 + 5):
-        for x in range(c0 - 4, -1, -1):
-            if clear(img, x, y, SWEAT):
-                return x, y
+def sweat_spot(frames):
+    """Top-left of a drop that is clear of the cat in every (img, headbox) of a group: as close behind the head as it fits."""
+    r0 = min(head[0] for _, head in frames)
+    c0 = min(head[1] for _, head in frames)
+    fits = lambda x, y: all(clear(img, x, y, SWEAT) for img, _ in frames)
+    top = max(0, r0 - 1)
+    spots = [(x, y) for y in range(r0 + 5) for x in range(c0 - 4, -1, -1) if fits(x, y)]
+    if spots:
+        return min(spots, key=lambda s: (c0 - 4 - s[0]) + 2 * abs(s[1] - top))
     for y in range(0, 5):   # otherwise anywhere in the air above the cat
         for x in range(W - 3, -1, -1):
-            if clear(img, x, y, SWEAT):
+            if fits(x, y):
                 return x, y
     return None
 
@@ -65,10 +70,14 @@ def main():
     labels = []
     for enum, label, kw, render in cats():
         labels.append((enum, label))
-        frames, sweat, nose, palette = {}, {}, {}, {}
+        frames, sweat, nose, palette, drawn = {}, {}, {}, {}, {}
         icon = (0, 0)
         for pose in posekit.POSES:
             cv = posekit.pose_canvas(pose, **kw)
+            spill = {side: n for side, n in posekit.overflow(cv).items() if n}
+            if pose not in posekit.AIRBORNE and spill.get('bottom') == 1:
+                del spill['bottom']   # paws resting on the taskbar edge
+            assert not spill, f'{enum} {pose} is cut off at the frame edge: {spill}'
             img = render(cv.g)
             rows = []
             for y in range(H):
@@ -82,14 +91,16 @@ def main():
                 rows.append(row)
             frames[pose] = rows
             if pose in SWEAT_POSES:
-                s = sweat_spot(img, cv.headbox)
-                if s: sweat[pose] = s
+                drawn[pose] = (img, cv.headbox)
             if pose in NOSE_POSES:
                 n = nose_spot(cv.g, cv.headset in FRONT_HEADS)
                 if n: nose[pose] = n
             if pose == 'Sit':
                 r0, c0, h, w = cv.headbox
                 icon = (max(0, min(W - 16, c0 + w // 2 - 8)), max(0, min(H - 12, r0 - 1)))
+        for group in SWEAT_GROUPS:
+            s = sweat_spot([drawn[p] for p in group])
+            if s: sweat.update((p, s) for p in group)
         lines.append(f'        [CatBreed.{enum}] = new(')
         lines.append('            new Dictionary<char, uint>')
         lines.append('            {')

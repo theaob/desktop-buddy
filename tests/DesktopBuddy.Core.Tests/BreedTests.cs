@@ -50,6 +50,24 @@ public class BreedTests
         Assert.NotEqual(CatPixels.Argb(CatPose.WalkA, look), CatPixels.Argb(CatPose.WalkA, look, sweaty: true));
     }
 
+    [Fact]
+    public void The_sweat_drop_stays_put_while_the_cat_gallops()
+    {
+        foreach (var breed in Enum.GetValues<CatBreed>())
+        {
+            var look = new CatLook(default, default, breed);
+            var drops = new[] { CatPose.RunA, CatPose.RunB, CatPose.RunC, CatPose.RunD }.Select(pose =>
+            {
+                var dry = CatPixels.Argb(pose, look);
+                var wet = CatPixels.Argb(pose, look, sweaty: true);
+                return Enumerable.Range(0, dry.Length).Where(i => dry[i] != wet[i]).ToArray();
+            }).ToList();
+
+            Assert.NotEmpty(drops[0]);
+            Assert.All(drops, drop => Assert.Equal(drops[0], drop));
+        }
+    }
+
     [Theory]
     [MemberData(nameof(DesignedBreeds))]
     public void A_napping_cat_blows_a_bubble(CatBreed breed)

@@ -6,6 +6,7 @@ public enum CatPose
     HeldBelly, Leap, CrouchA, CrouchB, ScratchA, ScratchB, Bat, LookUp,
     FallA, FallB, Land, Drowsy, Stretch, Yawn,
     SitTail, GroomA, GroomB, Loaf, LoafBlink, BellyA, BellyB, Startle, Curl, RunA, RunB,
+    RunC, RunD,
 }
 
 public static class CatAnimation
@@ -18,7 +19,7 @@ public static class CatAnimation
     private const double ScratchesPerSecond = 8;
     private const double WigglesPerSecond = 6;
     private const double FlailsPerSecond = 7;
-    private const double StridesPerSecond = 8;
+    private const double GallopFramesPerSecond = 12;
     private const double GroomStrokesPerSecond = 3;
     private const double RollsPerSecond = 3;
     private const double BegWigglesPerSecond = 1.5;
@@ -93,7 +94,10 @@ public static class CatAnimation
 
     private static CatPose Steps(double t) => Alternate(t * StepsPerSecond, CatPose.WalkA, CatPose.WalkB);
 
-    private static CatPose Gallop(double t) => Alternate(t * StridesPerSecond, CatPose.RunA, CatPose.RunB);
+    // A four-beat gallop: stretched out in the air, front paws land, bunched up in the air, back paws push off.
+    private static readonly CatPose[] GallopCycle = { CatPose.RunA, CatPose.RunB, CatPose.RunC, CatPose.RunD };
+
+    private static CatPose Gallop(double t) => GallopCycle[(long)(t * GallopFramesPerSecond) % GallopCycle.Length];
 
     private static CatPose Sitting(double t)
     {
