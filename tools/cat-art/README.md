@@ -2,7 +2,7 @@
 
 Python scripts that draw the ten designed cats (Bean, Wisp, Puff, Pebble and Sprout, cartoon and realistic) in every pose, and write them into `src/DesktopBuddy.Core/CatBreedArt.cs`.
 
-- `posekit.py`: the 34 poses, drawn from simple shapes plus hand-drawn heads.
+- `posekit.py`: every pose, drawn from simple shapes plus hand-drawn heads.
 - `drafts.py`: the cartoon cats (flat colours, dark outline).
 - `final.py`: the realistic cats (fur shading, outline in the fur's own colour).
 - `export_cs.py`: writes the C# file.

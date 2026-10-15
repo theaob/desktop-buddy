@@ -192,15 +192,39 @@ WALK_TAIL = [(5.5, 9.5), (3, 8), (2, 5.5), (2.5, 3.5)]
 
 def walk(cv, phase): standing(cv, walk_legs(phase), WALK_TAIL)
 
+# A rotary gallop in four frames: stretched out in the air, front paws land, bunched up in the air,
+# back paws land and push off. Each entry: body height, tilt (degrees, + is nose down), how stretched
+# the body is, head position, tail, and the far and near legs as hip/shoulder, knee/elbow, paw.
+GALLOP = [
+    dict(y=10.2, tilt=0, stretch=0.6, head=(22.6, 8.6), tail=[(5.5, 9.8), (3.4, 9.0), (2.2, 7.8)],
+         far=[[(9, 11.8), (6.2, 14.2), (4.2, 15.8)], [(19, 11.6), (22.2, 14), (24.8, 15.4)]],
+         near=[[(8, 12), (5.2, 14.8), (2.8, 16.4)], [(19.6, 11.8), (23, 14.4), (26.2, 16)]]),
+    dict(y=10.8, tilt=4, stretch=0.2, head=(22, 9.2), tail=[(5.5, 9.8), (3.4, 8.6), (2.6, 6.8)],
+         far=[[(9, 12), (11, 14.6), (13.4, 15.6)], [(18.6, 12.4), (17.6, 15.4), (16.2, 18)]],
+         near=[[(8, 12.2), (9.8, 15.2), (12.2, 16.6)], [(19.6, 12.6), (20, 15.4), (19.6, 18)]]),
+    dict(y=10.0, tilt=0, stretch=-0.8, arch=1.2, head=(21.4, 8.6), tail=[(5.8, 9.4), (3.6, 7.8), (2.8, 6.0)],
+         far=[[(9.6, 11.8), (11, 15), (13.2, 16)], [(18.6, 12), (18.2, 14.8), (16.6, 15.8)]],
+         near=[[(8.6, 12), (10.2, 15.4), (12.6, 16.6)], [(19.2, 12.2), (18.8, 15.2), (16.8, 16.6)]]),
+    dict(y=10.6, tilt=-6, stretch=0.2, head=(22.2, 7.6), tail=[(5.5, 10.2), (3.2, 9.8), (2.2, 8.4)],
+         far=[[(9, 12), (7.6, 15), (6.2, 18)], [(19, 11), (21.8, 12.4), (24.4, 13.4)]],
+         near=[[(8, 12.2), (8.8, 15.2), (9.2, 18)], [(19.6, 11.4), (22.6, 13.2), (25.4, 14.4)]]),
+]
+
 def run(cv, phase):
-    if phase == 0:   # stretched out
-        legs = dict(far=[[(8, 12), (5, 14.5), (2.5, 16)], [(20, 11.5), (23.5, 13.5), (26, 15)]],
-                    near=[[(9, 12), (6, 15), (3.5, 17.5)], [(19, 12), (22.5, 15), (25, 17.5)]])
-        standing(cv, legs, [(5.5, 9.5), (3, 9), (1, 8)], body_y=10.8, head=(22.5, 8.6))
-    else:            # gathered under
-        legs = dict(far=[[(9, 12), (12, 15), (14, 17)], [(18, 12), (16, 15), (13.5, 16.5)]],
-                    near=[[(8, 12), (11, 15.5), (13, 18)], [(19, 12), (17, 15.5), (15, 18)]])
-        standing(cv, legs, [(5.5, 9.5), (3, 7.5), (1.5, 6.5)], body_y=10.4, arch=1, head=(21.5, 8.2))
+    f = GALLOP[phase]
+    y, tilt, stretch, arch = f['y'], f['tilt'], f['stretch'], f.get('arch', 0)
+    for pts in f['far']:
+        cv.leg(pts, near=False)
+    cv.line(f['tail'], 2.2, 1.4, 'T')
+    cv.ellipse(13.6, y - arch * 0.5, 8.0 + stretch, 2.8 + arch * 0.4, 'B', angle=tilt)
+    cv.ellipse(14.6, y + 1.9, 5.2 + stretch, 0.9, 'C', angle=tilt)
+    cv.ellipse(8.4, y + 0.3 - tilt * 0.08, 3.0, 2.5, 'J')
+    cv.ellipse(19.8, y + 0.8 + tilt * 0.08, 2.2, 2.2, 'C')
+    hx, hy = f['head']
+    cv.line([(19.0, y - 1.0 + tilt * 0.08), (hx, hy)], 3.6, 3.2, 'B')
+    for pts in f['near']:
+        cv.leg(pts, near=True)
+    cv.head(hx, hy)
 
 def held_belly(cv):
     legs = dict(far=[[(9, 12), (9.5, 15), (10, 17)], [(18.5, 12), (18.5, 15), (19, 17)]],
@@ -382,10 +406,11 @@ POSES = {
     'BellyA': lambda cv: belly(cv, 0), 'BellyB': lambda cv: belly(cv, 1),
     'Startle': startle, 'Curl': curl,
     'RunA': lambda cv: run(cv, 0), 'RunB': lambda cv: run(cv, 1),
+    'RunC': lambda cv: run(cv, 2), 'RunD': lambda cv: run(cv, 3),
 }
 
 # Poses where the cat is off the ground, so it can be moved down to keep its ears in the frame.
-AIRBORNE = {'Leap', 'FallA', 'FallB', 'Dangle', 'HeldBelly'}
+AIRBORNE = {'Leap', 'FallA', 'FallB', 'Dangle', 'HeldBelly', 'RunA', 'RunC'}
 
 def overflow(cv):
     """How far the cat (not hearts or sleep marks) spills past a frame that leaves one pixel for the outline."""

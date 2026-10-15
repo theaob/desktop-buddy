@@ -10,7 +10,7 @@ Get the build the same way as before: download the `DesktopBuddy-win-x64` artifa
 | 2 | Pick each cat in the list in turn | The preview, the cat on the taskbar and the tray icon all change straight away. Fur colour and pattern grey out for every cat except Original | |
 | 3 | With a new cat picked, watch it for a few minutes | Walking, sitting, blinking, grooming, loafing, scratching and napping all use that cat's own drawings | |
 | 4 | Drag it by the head, then by the body, then drop it from high up | It hangs, dangles, flails and lands in its own style | |
-| 5 | Make the PC busy | It runs and a sweat drop shows beside its head, not on top of it | |
+| 5 | Make the PC busy, or roll it the yarn ball | It gallops in a four-step stride (stretched out, front paws land, bunched up, back paws push off), and when the PC is busy a sweat drop shows beside its head, not on top of it. The original cat gallops the same way | |
 | 6 | Let it nap or doze | A snot bubble swells at its nose | |
 | 7 | Restart Desktop Buddy | The cat you picked is still picked | |
 | 8 | Pick Original again | The original cat comes back with your fur colour and pattern | |

@@ -7,7 +7,7 @@ W, H = posekit.W, posekit.H
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'DesktopBuddy.Core', 'CatBreedArt.cs')
 CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-/:;<=>?@[]^_`{|}~"
 SWEAT = [(1, 0), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2), (1, 3)]   # drop shape, as in CatPixels
-SWEAT_POSES = ['WalkA', 'WalkB', 'Sit', 'SitBlink', 'LookUp', 'SitTail', 'RunA', 'RunB']
+SWEAT_POSES = ['WalkA', 'WalkB', 'Sit', 'SitBlink', 'LookUp', 'SitTail', 'RunA', 'RunB', 'RunC', 'RunD']
 NOSE_POSES = ['SitBlink', 'NapA', 'NapB', 'Drowsy', 'Curl']
 BUBBLE = [(dx, dy) for dx in range(3) for dy in range(3)]
 FRONT_HEADS = {'bean', 'puff', 'pebble', 'sprout'}
