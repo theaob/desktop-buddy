@@ -72,7 +72,7 @@ public class BehaviorEngineTests
     }
 
     [Fact]
-    public void Naps_when_the_user_is_away_and_wakes_slowly_on_input()
+    public void Naps_when_the_user_is_away_and_wakes_slowly_a_while_after_they_return()
     {
         var engine = NewEngine();
         engine.NapAfterSeconds = 60;
@@ -83,7 +83,12 @@ public class BehaviorEngineTests
         engine.Tick(Frame, userIdleSeconds: 120);
         Assert.Equal(BuddyState.Nap, engine.State);
 
-        engine.Tick(Frame, userIdleSeconds: 0.5);
+        // Sleeps on for a bit after the user is back, so there's time to wake it yourself.
+        Run(engine, BehaviorEngine.SleepInMinSeconds - 1, idle: 0.5);
+        Assert.Equal(BuddyState.Nap, engine.State);
+
+        for (double t = 0; t < BehaviorEngine.SleepInMaxSeconds && engine.State == BuddyState.Nap; t += Frame)
+            engine.Tick(Frame, 0.5);
         Assert.Equal(BuddyState.WakeUp, engine.State);
 
         Run(engine, BehaviorEngine.WakeUpSeconds - 0.5);
@@ -94,12 +99,56 @@ public class BehaviorEngineTests
     }
 
     [Fact]
-    public void Petting_wakes_a_napping_cat()
+    public void Clicking_a_napping_cat_wakes_it_with_a_grumble_then_it_sits()
     {
         var engine = NewEngine();
         engine.NapAfterSeconds = 60;
         engine.Tick(Frame, userIdleSeconds: 61);
 
+        engine.Pet();
+        Assert.Equal(BuddyState.Woken, engine.State);
+
+        engine.Pet();  // more clicks while it grumbles don't turn into hearts
+        Assert.Equal(BuddyState.Woken, engine.State);
+
+        Run(engine, BehaviorEngine.WokenSeconds + Frame);
+        Assert.Equal(BuddyState.Sit, engine.State);
+    }
+
+    [Fact]
+    public void Clicking_a_dozing_cat_wakes_it_with_a_grumble()
+    {
+        var engine = NewEngine();
+        Assert.True(RunUntil(engine, BuddyState.Doze));
+
+        engine.Pet();
+
+        Assert.Equal(BuddyState.Woken, engine.State);
+    }
+
+    [Fact]
+    public void Without_grumbling_a_clicked_cat_just_wakes_slowly()
+    {
+        var engine = NewEngine();
+        engine.GrumbleWhenWoken = false;
+        engine.NapAfterSeconds = 60;
+        engine.Tick(Frame, userIdleSeconds: 61);
+
+        engine.Pet();
+
+        Assert.Equal(BuddyState.WakeUp, engine.State);
+    }
+
+    [Fact]
+    public void Clicks_that_wake_the_cat_dont_count_toward_a_belly_roll()
+    {
+        var engine = NewEngine();
+        engine.NapAfterSeconds = 60;
+        engine.Tick(Frame, userIdleSeconds: 61);
+        engine.Pet();
+        Run(engine, BehaviorEngine.WokenSeconds + Frame);
+
+        engine.Pet();
         engine.Pet();
 
         Assert.Equal(BuddyState.Petted, engine.State);

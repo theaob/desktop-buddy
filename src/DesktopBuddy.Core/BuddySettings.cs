@@ -36,6 +36,9 @@ public sealed class BuddySettings
     /// <summary>Hurry and sweat when the PC is busy.</summary>
     public bool ReactToCpu { get; set; } = true;
 
+    /// <summary>Jump and grumble when clicked or grabbed awake.</summary>
+    public bool GrumbleWhenWoken { get; set; } = true;
+
     public FurColor Fur { get; set; }
 
     public CatPattern Pattern { get; set; }
@@ -62,6 +65,7 @@ public sealed class BuddySettings
         WatchWindows = WatchWindows,
         PlayWithYarn = PlayWithYarn,
         ReactToCpu = ReactToCpu,
+        GrumbleWhenWoken = GrumbleWhenWoken,
         Fur = Enum.IsDefined(Fur) ? Fur : default,
         Pattern = Enum.IsDefined(Pattern) ? Pattern : default,
         Breed = Enum.IsDefined(Breed) ? Breed : default,

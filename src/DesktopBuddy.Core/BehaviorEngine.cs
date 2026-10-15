@@ -17,6 +17,7 @@ public enum BuddyState
     Loaf,       // paws tucked under, content
     BellyUp,    // rolls over to show its belly after a lot of petting
     Startle,    // fur on end for a moment when a window flashes for attention
+    Woken,      // clicked awake from a nap or a doze: jumps, glares at you, then yawns
 }
 
 /// <summary>Where the user grabbed the cat, which decides how it hangs while carried.</summary>
@@ -39,13 +40,17 @@ public sealed class BehaviorEngine
     public const double GroomSeconds = 3.2;
     public const double BellyUpSeconds = 3.2;
     public const double StartleSeconds = 1.2;
+    public const double WokenSeconds = 3;
 
     // This many clicks within the window rolls the cat onto its back.
     public const int BellyUpPets = 3;
     public const double BellyUpWithinSeconds = 4;
 
-    // Any input within this window wakes a napping cat.
+    // Input within this window means the user is back. A napping cat sleeps on for a while
+    // after that, so there's time to wake it yourself, then wakes up slowly on its own.
     public const double WakeIdleSeconds = 2;
+    public const double SleepInMinSeconds = 20;
+    public const double SleepInMaxSeconds = 45;
 
     // A nearby mouse gets pounced on about once every few seconds, then the cat rests from hunting.
     public const double HuntChancePerSecond = 0.35;
@@ -59,6 +64,7 @@ public sealed class BehaviorEngine
     private double _huntCooldown;
     private double _lookCooldown;
     private double _clock;
+    private double _sleepInLeft;
     private readonly Queue<double> _petTimes = new();
 
     public BehaviorEngine(Random? random = null)
@@ -83,6 +89,12 @@ public sealed class BehaviorEngine
     public bool MouseGamesAllowed { get; set; } = true;
 
     public bool PlayAllowed { get; set; } = true;
+
+    /// <summary>Clicked awake, the cat jumps and grumbles; otherwise it just wakes up slowly.</summary>
+    public bool GrumbleWhenWoken { get; set; } = true;
+
+    /// <summary>Napping or dozing, so a click or a grab wakes it.</summary>
+    public bool Asleep => State is BuddyState.Nap or BuddyState.Doze;
 
     /// <summary>The mouse is on the cat's monitor, so following it makes sense.</summary>
     public bool CursorOnMonitor { get; set; }
@@ -134,6 +146,10 @@ public sealed class BehaviorEngine
                 if (TimeInState >= StartleSeconds)
                     Enter(BuddyState.Sit);
                 return;
+            case BuddyState.Woken:
+                if (TimeInState >= WokenSeconds)
+                    Enter(BuddyState.Sit);
+                return;
             case BuddyState.Stalk:
                 if (!MouseGamesAllowed || !WalkingAllowed)
                     Enter(BuddyState.Sit);
@@ -141,7 +157,7 @@ public sealed class BehaviorEngine
                     Enter(BuddyState.Pounce);
                 return;
             case BuddyState.Nap:
-                if (userIdleSeconds < WakeIdleSeconds)
+                if (userIdleSeconds < WakeIdleSeconds && (_sleepInLeft -= elapsedSeconds) <= 0)
                     Enter(BuddyState.WakeUp);
                 return;
         }
@@ -197,17 +213,25 @@ public sealed class BehaviorEngine
         return BuddyState.Sit;
     }
 
-    /// <summary>A click on the cat. Wakes it from a nap too; a few in a row and it rolls over for belly rubs.</summary>
+    /// <summary>A click on the cat. Wakes it if it's asleep; a few in a row and it rolls over for belly rubs.</summary>
     public void Pet()
     {
         if (State is BuddyState.Dragged or BuddyState.Falling or BuddyState.Pounce)
             return;
+        if (Asleep)
+        {
+            _petTimes.Clear();
+            Enter(GrumbleWhenWoken ? BuddyState.Woken : BuddyState.WakeUp);
+            return;
+        }
+        if (State == BuddyState.Woken)
+            return;  // still grumbling; no hearts yet
         _petTimes.Enqueue(_clock);
         while (_petTimes.Count > 0 && _clock - _petTimes.Peek() > BellyUpWithinSeconds)
             _petTimes.Dequeue();
         if (State == BuddyState.BellyUp)
             return;
-        if (_petTimes.Count >= BellyUpPets && State != BuddyState.Nap)
+        if (_petTimes.Count >= BellyUpPets)
         {
             _petTimes.Clear();
             Enter(BuddyState.BellyUp);
@@ -274,6 +298,8 @@ public sealed class BehaviorEngine
             BuddyState.Loaf => Between(10, 25),
             _ => 0,
         };
+        if (state == BuddyState.Nap)
+            _sleepInLeft = Between(SleepInMinSeconds, SleepInMaxSeconds);
     }
 
     private double Between(double min, double max) => min + _random.NextDouble() * (max - min);

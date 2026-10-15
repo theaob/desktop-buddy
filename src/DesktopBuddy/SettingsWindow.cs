@@ -86,7 +86,8 @@ internal sealed class SettingsWindow : Window
         var watch = Toggle("Look at windows that open, move or flash", settings.WatchWindows, v => settings.WatchWindows = v);
         var yarn = Toggle("Play with a yarn ball", settings.PlayWithYarn, v => settings.PlayWithYarn = v);
         var cpu = Toggle("Hurry and sweat when the PC is busy", settings.ReactToCpu, v => settings.ReactToCpu = v);
-        cpu.Margin = gap;
+        var grumble = Toggle("Grumble when woken up", settings.GrumbleWhenWoken, v => settings.GrumbleWhenWoken = v);
+        grumble.Margin = gap;
 
         var breakLabel = new TextBlock();
         var breaks = new Slider
@@ -176,6 +177,7 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(watch);
         panel.Children.Add(yarn);
         panel.Children.Add(cpu);
+        panel.Children.Add(grumble);
         panel.Children.Add(breakLabel);
         panel.Children.Add(breaks);
         panel.Children.Add(focusLabel);

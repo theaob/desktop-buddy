@@ -105,7 +105,8 @@ public sealed class SettingsStoreTests : IDisposable
         var defaults = SettingsStore.Load(SettingsPath);
         Assert.Equal(50, defaults.BreakEveryMinutes);
         Assert.Equal(25, defaults.FocusMinutes);
-        Assert.True(defaults.ChaseMouse && defaults.WatchWindows && defaults.PlayWithYarn && defaults.ReactToCpu);
+        Assert.True(defaults.ChaseMouse && defaults.WatchWindows && defaults.PlayWithYarn && defaults.ReactToCpu
+            && defaults.GrumbleWhenWoken);
 
         Directory.CreateDirectory(_dir);
         File.WriteAllText(SettingsPath, """{ "BreakEveryMinutes": 999, "FocusMinutes": 1, "ChaseMouse": false }""");
