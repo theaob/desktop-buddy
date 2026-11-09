@@ -9,3 +9,4 @@ Python scripts that draw the ten designed cats (Bean, Wisp, Puff, Pebble and Spr
 
 Needs Python 3 and Pillow. After changing a drawing, run `python3 export_cs.py` from this folder and commit the regenerated C# file.
 To see the cats, `python3 final.py <folder>` and `python3 drafts.py <folder>` write pose sheets and animated GIFs.
+`site_art.py` renders the GIFs for the project website (`site/assets`) from the shipped C# art; run it after changing any cat.

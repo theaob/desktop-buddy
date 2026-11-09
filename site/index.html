@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desktop Buddy</title>
+<meta name="description" content="A small pixel cat that lives on your Windows taskbar. It walks, naps, pounces on your mouse and nudges you to take breaks.">
+<meta property="og:title" content="Desktop Buddy">
+<meta property="og:description" content="A small pixel cat that lives on your Windows taskbar.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://theaob.github.io/desktop-buddy/">
+<meta property="og:image" content="https://theaob.github.io/desktop-buddy/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+  :root {
+    --bg: #eef1f7;
+    --bg-2: #e2e7f1;
+    --surface: #ffffff;
+    --tile: #f4f6fb;
+    --text: #22202b;
+    --muted: #5d6075;
+    --line: #d4d9e6;
+    --accent: #3f74d9;
+    --accent-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171822;
+      --bg-2: #1f2130;
+      --surface: #232535;
+      --tile: #e9edf5;
+      --text: #ecedf3;
+      --muted: #a4a7bb;
+      --line: #34374b;
+      --accent: #6d9cf2;
+      --accent-text: #10131c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171822; --bg-2: #1f2130; --surface: #232535; --tile: #e9edf5;
+    --text: #ecedf3; --muted: #a4a7bb; --line: #34374b; --accent: #6d9cf2; --accent-text: #10131c;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  img.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+
+  header.hero { background: linear-gradient(180deg, var(--bg-2), var(--bg)); padding: 56px 0 0; overflow: hidden; }
+  .hero h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+  .hero p.lead { font-size: 1.2rem; color: var(--muted); margin: 0 0 24px; max-width: 36em; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+  .btn {
+    display: inline-block; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--line); color: var(--text); background: var(--surface);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .stage { display: flex; justify-content: center; padding: 0 16px; }
+  .screen { background: linear-gradient(180deg, #cfdcf3, #e9eef8); border-radius: 16px 16px 0 0; padding-top: 32px; overflow: hidden; width: 760px; max-width: 100%; }
+  .screen img { display: block; width: 100%; height: auto; }
+
+  section { padding: 56px 0; }
+  section + section { border-top: 1px solid var(--line); }
+  h2 { font-size: 1.7rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 28px; max-width: 40em; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .card .pic { background: var(--tile); display: flex; justify-content: center; align-items: flex-end; height: 104px; padding-bottom: 8px; }
+  .card .pic img { width: 120px; height: 80px; }
+  .card .body { padding: 14px 16px 16px; }
+  .card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+  .cats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .cat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-align: center; }
+  .cat .pic { background: var(--tile); padding: 10px 0 6px; }
+  .cat img { width: 120px; height: 80px; display: block; margin: 0 auto; }
+  .cat span { display: block; padding: 8px 6px 10px; font-weight: 600; font-size: 0.95rem; }
+  .cat small { display: block; font-weight: 400; color: var(--muted); }
+
+  .steps { margin: 0; padding-left: 1.3em; }
+  .steps li { margin-bottom: 8px; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; color: var(--muted); }
+  code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.92em; background: var(--bg-2); padding: 1px 6px; border-radius: 6px; }
+  pre { background: var(--bg-2); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+
+  footer { padding: 28px 0 40px; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); }
+
+  @media (max-width: 520px) {
+    body { font-size: 16px; }
+    header.hero { padding-top: 36px; }
+    .btn { flex: 1 1 auto; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Desktop Buddy</h1>
+    <p class="lead">A small pixel cat that lives on your Windows taskbar. It walks, naps, pounces on your mouse, and nudges you to take a break now and then.</p>
+    <div class="cta">
+      <a class="btn primary" href="#download">Download for Windows</a>
+      <a class="btn" href="https://github.com/theaob/desktop-buddy">View on GitHub</a>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="screen"><img class="px" src="assets/hero.gif" width="760" height="152" alt="A blue-grey pixel cat walks onto a taskbar, sits, grooms, naps, then pounces and runs off."></div>
+  </div>
+</header>
+
+<main>
+  <section id="features">
+    <div class="wrap">
+      <h2>A cat with a life of its own</h2>
+      <p class="sub">It sits on top of the taskbar, out of your way, and gets on with its day. It is click-through where it is transparent, hides for fullscreen games and videos, and copes with auto-hide taskbars and multiple monitors. Every behaviour has a switch in Settings.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/groom.gif" alt="The cat grooms and bats at the air"></div>
+          <div class="body"><h3>Walks, sits and grooms</h3><p>Strolls along the taskbar, washes its face, blinks and flicks its tail.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/nap.gif" alt="The cat napping"></div>
+          <div class="body"><h3>Naps when you're away</h3><p>Step away and it curls up. Come back and it takes its time waking.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/woken.gif" alt="The cat startled awake, yawning"></div>
+          <div class="body"><h3>Grumbles if you wake it</h3><p>Click a sleeping cat and you'll get a startled hop, a glare and a yawn.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/pounce.gif" alt="The cat crouches and leaps"></div>
+          <div class="body"><h3>Hunts your mouse</h3><p>Sometimes it follows the cursor along the taskbar, and sometimes it pounces.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/petted.gif" alt="The cat purring with a heart above it"></div>
+          <div class="body"><h3>Likes a pat</h3><p>Click it and it purrs. Pick it up and it hangs by the scruff or the belly, depending on where you grab.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/belly.gif" alt="The cat rolling on its back"></div>
+          <div class="body"><h3>Asks for belly scratches</h3><p>Every so often it rolls over and asks. Ignore it and it sulks for a moment.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/scratch.gif" alt="The cat scratching"></div>
+          <div class="body"><h3>Break reminders and focus timer</h3><p>A speech bubble tells you when it's time to stretch, and the cat holds up a focus timer while you work.</p></div>
+        </div>
+        <div class="card">
+          <div class="pic"><img class="px" src="assets/moves/run.gif" alt="The cat galloping"></div>
+          <div class="body"><h3>Feels your PC working</h3><p>When the CPU is busy, the cat hurries and breaks a sweat.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cats">
+    <div class="wrap">
+      <h2>Pick your cat</h2>
+      <p class="sub">Eleven cats to choose from in Settings. The original cat also lets you pick its fur colour and pattern; the other five come in a cartoon style and a realistic one.</p>
+      <div class="cats">
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/original.gif" alt="The original cat, a blue-grey tabby"></div><span>Original<small>your colour, your pattern</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/beancartoon.gif" alt="Bean, cartoon style"></div><span>Bean<small>ginger tabby, cartoon</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/beanrealistic.gif" alt="Bean, realistic style"></div><span>Bean<small>ginger tabby, realistic</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/wispcartoon.gif" alt="Wisp, cartoon style"></div><span>Wisp<small>black shorthair, cartoon</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/wisprealistic.gif" alt="Wisp, realistic style"></div><span>Wisp<small>black shorthair, realistic</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/puffcartoon.gif" alt="Puff, cartoon style"></div><span>Puff<small>long-haired colorpoint, cartoon</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/puffrealistic.gif" alt="Puff, realistic style"></div><span>Puff<small>long-haired colorpoint, realistic</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/pebblecartoon.gif" alt="Pebble, cartoon style"></div><span>Pebble<small>tuxedo, cartoon</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/pebblerealistic.gif" alt="Pebble, realistic style"></div><span>Pebble<small>tuxedo, realistic</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/sproutcartoon.gif" alt="Sprout, cartoon style"></div><span>Sprout<small>calico kitten, cartoon</small></span></div>
+        <div class="cat"><div class="pic"><img class="px" src="assets/cats/sproutrealistic.gif" alt="Sprout, realistic style"></div><span>Sprout<small>calico kitten, realistic</small></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="wrap">
+      <h2>Download</h2>
+      <p class="sub">Desktop Buddy runs on Windows 11. It's a single <code>DesktopBuddy.exe</code> with nothing to install.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/theaob/desktop-buddy/releases">Get it from Releases</a>
+        <a class="btn" href="https://github.com/theaob/desktop-buddy/actions/workflows/build.yml?query=branch%3Amain">Latest build</a>
+      </div>
+      <ol class="steps">
+        <li>Download <code>DesktopBuddy.exe</code> and run it. The cat appears on your taskbar and an icon shows up in the tray.</li>
+        <li>Windows may warn about an unrecognised app because the exe isn't signed yet. Choose <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
+        <li>Right-click the tray icon for Settings: pick a cat, turn behaviours on or off, and choose whether it starts with Windows.</li>
+      </ol>
+      <p class="note">No release yet? Every build of <code>main</code> also produces the exe. Open the latest build run, scroll to <strong>Artifacts</strong> and download <code>DesktopBuddy-win-x64</code> (you need to be signed in to GitHub).</p>
+      <h3>Build it yourself</h3>
+      <p>You need the .NET 8 SDK on Windows.</p>
+      <pre><code>git clone https://github.com/theaob/desktop-buddy
+cd desktop-buddy
+dotnet run --project src/DesktopBuddy</code></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Desktop Buddy is open source on <a href="https://github.com/theaob/desktop-buddy">GitHub</a>. Every cat is drawn pixel by pixel for this project.
+  </div>
+</footer>
+
+</body>
+</html>

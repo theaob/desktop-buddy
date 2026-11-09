@@ -2,6 +2,8 @@
 
 A small pixel cat that lives on the Windows taskbar: it walks, naps, and nudges you to take breaks.
 
+Website: https://theaob.github.io/desktop-buddy/
+
 Plan: [Desktop Buddy: Project Plan](https://claude.ai/code/artifact/2b44736d-a7fd-40a8-88b8-2615c187930f)
 
 ## Status
@@ -32,3 +34,7 @@ Every pull request also builds a ready-to-run `DesktopBuddy.exe`, attached to th
 - `MainWindow` draws and moves the cat. It is a transparent, topmost tool window placed with `SetWindowPos` in physical pixels, so DPI scaling can't skew it. Its transparent pixels are click-through.
 - `FullscreenDetector` hides the cat for fullscreen games, video and presentations.
 - `TrayIcon` (WinForms `NotifyIcon`), `SettingsWindow`, and `StartupRegistration` (the current user's `Run` registry key) make up the rest of the app.
+
+## Website
+
+The project page lives in [site](site) and is published to GitHub Pages by the `pages` workflow whenever `site/` changes on `main`. Its cat GIFs are rendered from the app's own pixel art: after changing any cat art, run `python3 tools/cat-art/site_art.py` and commit the regenerated `site/assets`.
