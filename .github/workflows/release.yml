@@ -1,0 +1,58 @@
+name: release
+
+# Publishes DesktopBuddy.exe to a GitHub Release.
+# Either push a version tag (git tag v0.1.0 && git push origin v0.1.0),
+# or run this workflow from the Actions tab and type the version.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, like v0.1.0'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the version
+        shell: bash
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must look like v1.2.3, got '$TAG'"; exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"; exit 1
+          fi
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run unit tests
+        run: dotnet test tests/DesktopBuddy.Core.Tests/DesktopBuddy.Core.Tests.csproj -c Release
+
+      - name: Publish self-contained exe
+        run: dotnet publish src/DesktopBuddy/DesktopBuddy.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ env.VERSION }} -o publish
+
+      - name: Create the release
+        shell: bash
+        run: |
+          gh release create "$TAG" publish/DesktopBuddy.exe \
+            --target "$GITHUB_SHA" \
+            --title "Desktop Buddy $TAG" \
+            --generate-notes

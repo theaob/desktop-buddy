@@ -27,6 +27,15 @@ dotnet test tests/DesktopBuddy.Core.Tests
 
 Every pull request also builds a ready-to-run `DesktopBuddy.exe`, attached to the build run as an artifact.
 
+## Release
+
+The `release` workflow tests the app, builds `DesktopBuddy.exe` stamped with the version, and attaches it to a new GitHub Release with generated notes. Start it either way:
+
+- push a version tag: `git tag v0.1.0 && git push origin v0.1.0`
+- or Actions → release → Run workflow, and type the version (it creates the tag on the chosen branch).
+
+The website's download button always points at the newest release's `DesktopBuddy.exe`.
+
 ## How it works
 
 - `DesktopBuddy.Core` holds the platform-free parts, all unit tested: the `BehaviorEngine` state machine (walk, sit, nap, petted, dragged, falling), the frame picker in `CatAnimation`, the pixel frames in `CatPixels`, and the settings store.
