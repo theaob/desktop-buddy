@@ -219,6 +219,16 @@ internal sealed class SettingsWindow : Window
         [CatBreed.Waffles] = "Waffles, fawn with a dark mask (dog)",
         [CatBreed.Hazel] = "Hazel, spaniel puppy (dog)",
         [CatBreed.Peaches] = "Peaches, apricot poodle (dog)",
+        [CatBreed.Ember] = "Ember, orange-breasted songbird (bird)",
+        [CatBreed.Blueberry] = "Blueberry, blue-capped tit (bird)",
+        [CatBreed.Acorn] = "Acorn, streaky sparrow (bird)",
+        [CatBreed.Sunny] = "Sunny, crested grey parrot (bird)",
+        [CatBreed.Kiwi] = "Kiwi, green budgie (bird)",
+        [CatBreed.Skye] = "Skye, blue budgie (bird)",
+        [CatBreed.Inky] = "Inky, glossy crow (bird)",
+        [CatBreed.Slate] = "Slate, grey pigeon (bird)",
+        [CatBreed.Nugget] = "Nugget, yellow chick (bird)",
+        [CatBreed.Rosehip] = "Rosehip, crested red finch (bird)",
     };
 
     private static readonly Dictionary<FurColor, string> FurNames = new()
