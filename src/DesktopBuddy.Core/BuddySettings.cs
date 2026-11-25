@@ -39,6 +39,9 @@ public sealed class BuddySettings
     /// <summary>Now and then roll over and ask for belly scratches.</summary>
     public bool AskForScratches { get; set; } = true;
 
+    /// <summary>Now and then leave a little pile on the taskbar for the user to click away.</summary>
+    public bool PoopNowAndThen { get; set; } = true;
+
     /// <summary>Hurry and sweat when the PC is busy.</summary>
     public bool ReactToCpu { get; set; } = true;
 
@@ -72,6 +75,7 @@ public sealed class BuddySettings
         PlayWithYarn = PlayWithYarn,
         PlayWithBone = PlayWithBone,
         AskForScratches = AskForScratches,
+        PoopNowAndThen = PoopNowAndThen,
         ReactToCpu = ReactToCpu,
         GrumbleWhenWoken = GrumbleWhenWoken,
         Fur = Enum.IsDefined(Fur) ? Fur : default,

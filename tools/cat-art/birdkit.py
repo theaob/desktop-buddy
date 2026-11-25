@@ -410,6 +410,11 @@ def perch(cv, phase):
     cv.line([(15.0, 14.6), (15.4, 16.4), (16.8, 17.6)], 1.15, 1.15, 'L')
     cv.wing((15.8, 10.0), 'fold', angle=0)
 
+def squat(cv, phase):
+    """Doing its business: leaning forward on bent legs, tail flicked up; eyes shut on the second frame."""
+    stand(cv, eye='open' if phase == 0 else 'closed', legs='bent', body=(14.8, 11.8), head=(18.8, 7.8),
+          tilt=-12, tail=-30 if phase == 0 else -38)
+
 POSES = {
     'WalkA': lambda cv: hop(cv, 0), 'WalkB': lambda cv: hop(cv, 1),
     'Sit': lambda cv: stand(cv), 'SitBlink': lambda cv: stand(cv, eye='closed'),
@@ -427,6 +432,7 @@ POSES = {
     'Startle': startle, 'Curl': curl,
     'RunA': lambda cv: fly(cv, 0), 'RunB': lambda cv: fly(cv, 1),
     'RunC': lambda cv: fly(cv, 2), 'RunD': lambda cv: fly(cv, 3),
+    'SquatA': lambda cv: squat(cv, 0), 'SquatB': lambda cv: squat(cv, 1),
 }
 # bird-only extras, not in the app's CatPose set yet
 BIRD_POSES = {

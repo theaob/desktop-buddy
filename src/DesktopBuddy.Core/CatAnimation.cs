@@ -11,6 +11,7 @@ public enum CatPose
     CarryA, CarryB, ChewA, ChewB, Toss, Catch, PlayBow,
     // Birds only: pecking at seeds, singing, flapping in place.
     PeckA, PeckB, SingA, SingB, FlapA, FlapB,
+    SquatA, SquatB,  // doing its business: rump low, tail up; eyes shut tight on the second frame
 }
 
 public static class CatAnimation
@@ -54,6 +55,9 @@ public static class CatAnimation
     private const double DrowsyUntil = 0.9;
     private const double StretchUntil = 2.0;
 
+    // Squatting: looks around until this mark, then shuts its eyes tight and gets on with it.
+    private const double SquatLookSeconds = 1.2;
+
     // Clicked awake: fur on end until the first mark, a glare until the second, then a yawn.
     private const double WokenStartleUntil = 0.8;
     private const double WokenGlareUntil = 2.2;
@@ -94,6 +98,7 @@ public static class CatAnimation
         BuddyState.Startle => CatPose.Startle,
         BuddyState.AskBelly => Alternate(secondsInState * BegWigglesPerSecond, CatPose.BellyA, CatPose.BellyB),
         BuddyState.Sulk => CatPose.Loaf,
+        BuddyState.Squat => secondsInState < SquatLookSeconds ? CatPose.SquatA : CatPose.SquatB,
         BuddyState.Stalk => Alternate(secondsInState * WigglesPerSecond, CatPose.CrouchA, CatPose.CrouchB),
         BuddyState.Pounce => CatPose.Leap,
         BuddyState.Falling => Alternate(secondsInState * FlailsPerSecond, CatPose.FallA, CatPose.FallB),

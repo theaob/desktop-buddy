@@ -29,6 +29,7 @@ public enum BuddyState
     Peck,       // pecks at seeds on the taskbar
     Sing,       // throws its head back and sings, notes floating up
     Flap,       // shakes out its wings, standing in place
+    Squat,      // doing its business; leaves a little mess behind for you to clean up
 }
 
 /// <summary>Where the user grabbed the cat, which decides how it hangs while carried.</summary>
@@ -56,6 +57,12 @@ public sealed class BehaviorEngine
     public const double SulkSeconds = 6;
     public const double PlayBowSeconds = 1.4;
     public const double BoneTossSeconds = 3.6;
+    public const double SquatSeconds = 3.2;
+
+    // Every so often, while the user is around, the buddy squats and leaves a little pile on the taskbar.
+    // Like the belly asks, only time the user is at the PC counts.
+    public const double PoopEveryMinSeconds = 25 * 60;
+    public const double PoopEveryMaxSeconds = 45 * 60;
     public const double SingSeconds = 4;
     public const double FlapSeconds = 1.2;
 
@@ -90,12 +97,14 @@ public sealed class BehaviorEngine
     private double _sleepInLeft;
     private double _askIn;
     private bool _scratchedOnRequest;
+    private double _poopIn;
     private readonly Queue<double> _petTimes = new();
 
     public BehaviorEngine(Random? random = null)
     {
         _random = random ?? new Random();
         _askIn = Between(AskEveryMinSeconds, AskEveryMaxSeconds);
+        _poopIn = Between(PoopEveryMinSeconds, PoopEveryMaxSeconds);
         Enter(BuddyState.Sit);
     }
 
@@ -132,6 +141,21 @@ public sealed class BehaviorEngine
 
     /// <summary>Seconds of the user being around until the cat next asks for belly scratches.</summary>
     public double AskInSeconds => _askIn;
+
+    /// <summary>Now and then squatting to leave a pile on the taskbar.</summary>
+    public bool PoopAllowed { get; set; } = true;
+
+    /// <summary>False while too many piles are already lying around; then it asks for a cleanup instead.</summary>
+    public bool PoopRoom { get; set; } = true;
+
+    /// <summary>Seconds of the user being around until the next squat.</summary>
+    public double PoopInSeconds => _poopIn;
+
+    /// <summary>Raised as a squat finishes: time to put a pile behind the buddy.</summary>
+    public event Action? Pooped;
+
+    /// <summary>Raised when it was time to go but too many piles were lying around.</summary>
+    public event Action? WantsCleanup;
 
     /// <summary>The mouse is on the cat's monitor, so following it makes sense.</summary>
     public bool CursorOnMonitor { get; set; }
@@ -201,6 +225,13 @@ public sealed class BehaviorEngine
                 if (TimeInState >= WokenSeconds)
                     Enter(BuddyState.Sit);
                 return;
+            case BuddyState.Squat:
+                if (TimeInState >= SquatSeconds)
+                {
+                    Pooped?.Invoke();
+                    Enter(WalkingAllowed ? BuddyState.Walk : BuddyState.Sit);  // and off it goes, as if nothing happened
+                }
+                return;
             case BuddyState.Stalk:
                 if (!MouseGamesAllowed || !WalkingAllowed)
                     Enter(BuddyState.Sit);
@@ -234,6 +265,14 @@ public sealed class BehaviorEngine
         if (_askIn <= 0 && AskForScratchesAllowed && State is BuddyState.Sit or BuddyState.Walk or BuddyState.Loaf)
         {
             AskForScratches();
+            return;
+        }
+
+        if (PoopAllowed && userIdleSeconds < AskOnlyWhileIdleUnderSeconds)
+            _poopIn -= elapsedSeconds;
+        if (_poopIn <= 0 && PoopAllowed && State is BuddyState.Sit or BuddyState.Walk or BuddyState.Loaf)
+        {
+            Poop();
             return;
         }
 
@@ -320,8 +359,8 @@ public sealed class BehaviorEngine
             Enter(GrumbleWhenWoken ? BuddyState.Woken : BuddyState.WakeUp);
             return;
         }
-        if (State == BuddyState.Woken)
-            return;  // still grumbling; no hearts yet
+        if (State is BuddyState.Woken or BuddyState.Squat)
+            return;  // still grumbling, or busy; no hearts now
         _petTimes.Enqueue(_clock);
         while (_petTimes.Count > 0 && _clock - _petTimes.Peek() > BellyUpWithinSeconds)
             _petTimes.Dequeue();
@@ -352,6 +391,23 @@ public sealed class BehaviorEngine
         if (State is BuddyState.Dragged or BuddyState.Falling or BuddyState.Pounce)
             return;
         Enter(BuddyState.AskBelly);
+    }
+
+    /// <summary>
+    /// Squats now, whatever the timer says. With no room for another pile it raises
+    /// <see cref="WantsCleanup"/> instead and waits for the next time.
+    /// </summary>
+    public void Poop()
+    {
+        _poopIn = Between(PoopEveryMinSeconds, PoopEveryMaxSeconds);
+        if (State is BuddyState.Dragged or BuddyState.Falling or BuddyState.Pounce)
+            return;
+        if (!PoopRoom)
+        {
+            WantsCleanup?.Invoke();
+            return;
+        }
+        Enter(BuddyState.Squat);
     }
 
     private void ResetAsk() => _askIn = Between(AskEveryMinSeconds, AskEveryMaxSeconds);

@@ -54,6 +54,8 @@ public partial class MainWindow : Window
     private readonly FocusTimer _focus = new();
     private readonly CpuMonitor _cpu = new();
     private readonly YarnBall _yarn = new();
+    private readonly PoopPiles _poops = new();
+    private readonly Dictionary<int, PileSpot> _pileSpots = new();
     private readonly Random _random = new();
     private BubbleWindow? _bubble;
     private YarnWindow? _yarnWindow;
@@ -71,6 +73,8 @@ public partial class MainWindow : Window
         CatImage.Source = CatSprite.Frame(CatPose.Sit, settings.Look);
         SourceInitialized += OnSourceInitialized;
         _timer.Tick += OnTick;
+        _engine.Pooped += OnPooped;
+        _engine.WantsCleanup += OnWantsCleanup;
     }
 
     /// <summary>Hidden from the tray menu; separate from hiding for fullscreen apps.</summary>
@@ -99,6 +103,8 @@ public partial class MainWindow : Window
             _watcher?.Dispose();
             _bubble?.Close();
             _yarnWindow?.Close();
+            foreach (var spot in _pileSpots.Values)
+                spot.Window.Close();
         };
 
         BuddyLog.Write($"Started. Windows {Environment.OSVersion.Version}, monitors: {Native.GetSystemMetrics(Native.SM_CMONITORS)}");
@@ -128,6 +134,7 @@ public partial class MainWindow : Window
                 Visibility = Visibility.Hidden;
             _yarnWindow?.Hide();
             _bubble?.Follow(0, 0, catVisible: false);
+            TickPoops(elapsed, visible: false);
             return;
         }
         if (Visibility != Visibility.Visible)
@@ -151,6 +158,9 @@ public partial class MainWindow : Window
         // Asks only when it won't talk over a reminder or another bubble.
         _engine.AskForScratchesAllowed = _settings.AskForScratches && !_focus.IsRunning
             && (_bubble?.Message is null || _engine.State == BuddyState.AskBelly);
+        // Only where a pile has somewhere to lie: on a taskbar along the top or bottom.
+        _engine.PoopAllowed = _settings.PoopNowAndThen && !_focus.IsRunning && IsHorizontalTaskbar;
+        _engine.PoopRoom = _poops.HasRoom;
         _engine.CursorOnMonitor = cursorOnMonitor;
         _engine.CursorNear = cursorOnMonitor && Math.Abs(cursorAside) < HuntReachDip && cursorAbove > 4 && cursorAbove < HuntHeightDip;
         _engine.Tick(elapsed, userIdle);
@@ -162,6 +172,7 @@ public partial class MainWindow : Window
         }
 
         Move(elapsed);
+        TickPoops(elapsed, visible: true);
 
         bool sweaty = _settings.ReactToCpu && _cpu.Busy;
         // Gallops after the yarn, and when a busy PC has it hurrying along.
@@ -319,6 +330,87 @@ public partial class MainWindow : Window
             return;
         if (_engine.Notice(urgent))
             _direction = (rect.Left + rect.Right) / 2 >= (me.Left + me.Right) / 2 ? 1 : -1;
+    }
+
+    // ---- Piles on the taskbar ----
+
+    /// <summary>A pile's window, the monitor it was left on, and where its bottom edge sits (physical pixels).</summary>
+    private sealed record PileSpot(PoopWindow Window, IntPtr Monitor)
+    {
+        public int Bottom { get; set; }
+    }
+
+    // Sprite column just under the raised tail in the squat poses, counted from the buddy's back end.
+    // A bird's body is shorter and sits further forward in the frame.
+    private int TailColumn => Species == Species.Bird ? 11 : 8;
+
+    /// <summary>The squat is done: leave a pile just behind the cat.</summary>
+    private void OnPooped()
+    {
+        if (!Native.GetWindowRect(_hwnd, out var me))
+            return;
+        double scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        int pileWidth = (int)(PoopArt.Size * 2 * scale);
+        double px = me.Width / (double)CatPixels.Width;
+        double tail = (_direction > 0 ? TailColumn : CatPixels.Width - TailColumn) * px;
+        var zone = WalkZone(me.Width, me.Height);
+        int x = Math.Clamp(me.Left + (int)(tail - pileWidth / 2.0), zone.Left, Math.Max(zone.Left, zone.Right - pileWidth));
+
+        var pile = _poops.Drop(x, PoopPiles.StyleFor(Species));
+        if (pile is null)
+            return;
+        var window = new PoopWindow(pile.Id);
+        window.Cleaned += OnPileClicked;
+        _pileSpots[pile.Id] = new PileSpot(window, _monitor) { Bottom = zone.Y + me.Height };
+        BuddyLog.Write($"Left a pile ({_poops.Count} on the taskbar).");
+    }
+
+    /// <summary>Time to go, but there are already too many piles lying around.</summary>
+    private void OnWantsCleanup()
+    {
+        BuddyLog.Write("Asked for a cleanup.");
+        if (_bubble is { Message: null })
+            _bubble.Say(Pick(Lines.Cleanup), 5);
+    }
+
+    private void OnPileClicked(int id)
+    {
+        if (!_poops.Clean(id))
+            return;
+        BuddyLog.Write($"Cleaned up a pile ({_poops.Count} left).");
+        if (_poops.Count == 0 && _bubble is { Message: null } && _random.NextDouble() < 0.5)
+            _bubble.Say(Pick(Lines.Cleaned), 3);
+    }
+
+    /// <summary>Keeps each pile's window where its pile is, and closes the ones that have been cleaned up.</summary>
+    private void TickPoops(double elapsed, bool visible)
+    {
+        if (!_settings.PoopNowAndThen)
+            foreach (var pile in _poops.All)
+                _poops.Clean(pile.Id);  // turned off: tidy up after it
+        _poops.Tick(elapsed);
+
+        foreach (var id in _pileSpots.Keys.Where(id => !_poops.All.Any(p => p.Id == id)).ToList())
+        {
+            _pileSpots[id].Window.Close();
+            _pileSpots.Remove(id);
+        }
+
+        bool measured = Native.GetWindowRect(_hwnd, out var me);
+        foreach (var pile in _poops.All)
+        {
+            if (!_pileSpots.TryGetValue(pile.Id, out var spot))
+                continue;
+            if (!visible)
+            {
+                spot.Window.Hide();
+                continue;
+            }
+            // Piles on the cat's monitor follow the taskbar as it auto-hides; others stay where they were left.
+            if (measured && spot.Monitor == _monitor)
+                spot.Bottom = WalkZone(me.Width, me.Height).Y + me.Height;
+            spot.Window.Place((int)pile.X, spot.Bottom, PoopPiles.Frame(pile));
+        }
     }
 
     private bool IsHorizontalTaskbar => _taskbar is null || _taskbar.Edge is TaskbarEdge.Bottom or TaskbarEdge.Top;
@@ -564,6 +656,7 @@ public partial class MainWindow : Window
             $"Hiding because:  {_hideReason ?? "nothing"}",
             $"CPU load:        {_cpu.Load:P0}{(_cpu.Busy ? " (busy)" : "")}",
             $"Belly ask in:    {(_settings.AskForScratches ? $"{_engine.AskInSeconds / 60:0.0} min of use" : "off")}",
+            $"Next pile in:    {(_settings.PoopNowAndThen ? $"{_engine.PoopInSeconds / 60:0.0} min of use ({_poops.Count} on the taskbar)" : "off")}",
             $"Focus timer:     {(_focus.IsRunning ? _focus.Display + " left" : "off")}",
             $"Since a break:   {_breaks.WorkedSeconds / 60:0} min of use (reminds every {_settings.BreakEveryMinutes} min)",
             $"Windows:         {Environment.OSVersion.Version}",

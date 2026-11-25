@@ -87,6 +87,7 @@ internal sealed class SettingsWindow : Window
         var yarn = Toggle("Play with a yarn ball", settings.PlayWithYarn, v => settings.PlayWithYarn = v);
         var bone = Toggle("Play with a bone (dogs)", settings.PlayWithBone, v => settings.PlayWithBone = v);
         var ask = Toggle("Ask for belly scratches now and then", settings.AskForScratches, v => settings.AskForScratches = v);
+        var poop = Toggle("Leave a little mess now and then (click it to clean up)", settings.PoopNowAndThen, v => settings.PoopNowAndThen = v);
         var cpu = Toggle("Hurry and sweat when the PC is busy", settings.ReactToCpu, v => settings.ReactToCpu = v);
         var grumble = Toggle("Grumble when woken up", settings.GrumbleWhenWoken, v => settings.GrumbleWhenWoken = v);
         grumble.Margin = gap;
@@ -180,6 +181,7 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(yarn);
         panel.Children.Add(bone);
         panel.Children.Add(ask);
+        panel.Children.Add(poop);
         panel.Children.Add(cpu);
         panel.Children.Add(grumble);
         panel.Children.Add(breakLabel);
