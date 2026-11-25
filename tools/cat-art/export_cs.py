@@ -1,7 +1,7 @@
-"""Writes src/DesktopBuddy.Core/CatBreedArt.cs: every pose of the ten designed cats and the nine dogs as pixel grids.
+"""Writes src/DesktopBuddy.Core/CatBreedArt.cs: every pose of the ten designed cats, the nine dogs and the ten birds as pixel grids.
 Run from this folder: python3 export_cs.py"""
 import os
-import posekit, final, drafts, dogkit, dogs
+import posekit, final, drafts, dogkit, dogs, birdkit, birds
 
 W, H = posekit.W, posekit.H
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'DesktopBuddy.Core', 'CatBreedArt.cs')
@@ -28,6 +28,9 @@ def buddies():
     for name, _, kind, head, tail, fluff, coat in dogs.DOGS:
         yield (name, dogkit.POSES, lambda pose, a=(kind, head, tail): dogkit.pose_canvas(pose, *a),
                lambda cv, fluff=fluff, coat=coat: dogs.draw_props(final.render(final.fluffy(cv.g) if fluff else cv.g, coat), cv.props))
+    for name, _, spec, coat in birds.BIRDS:
+        yield (name, birdkit.APP_POSES, lambda pose, spec=spec: birdkit.pose_canvas(pose, spec),
+               lambda cv, coat=coat: birds.draw_props(final.render(cv.g, coat), cv.props))
 
 def clear(img, x, y, shape, margin=1):
     for dx, dy in shape:
@@ -57,7 +60,11 @@ def sweat_spot(frames):
 
 def nose_spot(g, front):
     spots = [(c, r) for r in range(H) for c in range(W) if g[r][c] == 'n']
-    if not spots: return None
+    if not spots:   # a bird: the bubble hangs off the tip of its beak
+        beak = [(c, r) for r in range(H) for c in range(W) if g[r][c] == 'k']
+        if not beak: return None
+        tip = max(c for c, _ in beak)
+        spots = [min(((c, r) for c, r in beak if c == tip), key=lambda p: p[1])]
     c, r = spots[0]
     x, y = (c + 1, r + 1) if front else (c + 1, r)
     x, y = min(x, W - 3), max(y, 2)
@@ -79,7 +86,7 @@ def main():
         for pose in poses:
             cv = canvas(pose)
             spill = {side: n for side, n in posekit.overflow(cv).items() if n}
-            if pose not in posekit.AIRBORNE and spill.get('bottom') == 1:
+            if pose not in posekit.AIRBORNE | birdkit.AIRBORNE and spill.get('bottom') == 1:
                 del spill['bottom']   # paws resting on the taskbar edge
             assert not spill, f'{enum} {pose} is cut off at the frame edge: {spill}'
             img = render(cv)

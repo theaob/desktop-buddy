@@ -9,6 +9,8 @@ public enum CatPose
     RunC, RunD,
     // Dogs only: playing with a bone.
     CarryA, CarryB, ChewA, ChewB, Toss, Catch, PlayBow,
+    // Birds only: pecking at seeds, singing, flapping in place.
+    PeckA, PeckB, SingA, SingB, FlapA, FlapB,
 }
 
 public static class CatAnimation
@@ -26,6 +28,12 @@ public static class CatAnimation
     private const double RollsPerSecond = 3;
     private const double BegWigglesPerSecond = 1.5;
     private const double ChewsPerSecond = 2.5;
+    private const double SingNotesPerSecond = 1.5;
+    private const double FlapsPerSecond = 6;
+
+    // Pecking: head down looking for a moment, then a quick peck, over and over.
+    private const double PeckEverySeconds = 0.9;
+    private const double PeckFrom = 0.6;
 
     // Tossing the bone: up in the air until the mark, then caught and held, over and over.
     private const double TossEverySeconds = 1.2;
@@ -97,6 +105,9 @@ public static class CatAnimation
         BuddyState.Chew => Alternate(secondsInState * ChewsPerSecond, CatPose.ChewA, CatPose.ChewB),
         BuddyState.BoneToss => secondsInState % TossEverySeconds < TossUntil ? CatPose.Toss : CatPose.Catch,
         BuddyState.PlayBow => CatPose.PlayBow,
+        BuddyState.Peck => secondsInState % PeckEverySeconds >= PeckFrom ? CatPose.PeckB : CatPose.PeckA,
+        BuddyState.Sing => Alternate(secondsInState * SingNotesPerSecond, CatPose.SingA, CatPose.SingB),
+        BuddyState.Flap => Alternate(secondsInState * FlapsPerSecond, CatPose.FlapA, CatPose.FlapB),
         BuddyState.Woken => secondsInState < WokenStartleUntil ? CatPose.Startle
             : secondsInState < WokenGlareUntil ? CatPose.Drowsy
             : CatPose.Yawn,

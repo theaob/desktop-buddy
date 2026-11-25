@@ -146,6 +146,7 @@ public partial class MainWindow : Window
         _engine.MouseGamesAllowed = _settings.ChaseMouse && !_focus.IsRunning;
         _engine.PlayAllowed = _settings.PlayWithYarn && !_focus.IsRunning;
         _engine.BoneAllowed = _settings.PlayWithBone && Species == Species.Dog && !_focus.IsRunning;
+        _engine.BirdAllowed = Species == Species.Bird;
         _engine.GrumbleWhenWoken = _settings.GrumbleWhenWoken;
         // Asks only when it won't talk over a reminder or another bubble.
         _engine.AskForScratchesAllowed = _settings.AskForScratches && !_focus.IsRunning
