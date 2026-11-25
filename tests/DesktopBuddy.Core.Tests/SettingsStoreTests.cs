@@ -106,7 +106,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(50, defaults.BreakEveryMinutes);
         Assert.Equal(25, defaults.FocusMinutes);
         Assert.True(defaults.ChaseMouse && defaults.WatchWindows && defaults.PlayWithYarn && defaults.ReactToCpu && defaults.AskForScratches
-            && defaults.GrumbleWhenWoken);
+            && defaults.GrumbleWhenWoken && defaults.PoopNowAndThen);
 
         Directory.CreateDirectory(_dir);
         File.WriteAllText(SettingsPath, """{ "BreakEveryMinutes": 999, "FocusMinutes": 1, "ChaseMouse": false }""");
@@ -120,5 +120,9 @@ public sealed class SettingsStoreTests : IDisposable
         loaded.AskForScratches = false;
         SettingsStore.Save(SettingsPath, loaded);
         Assert.False(SettingsStore.Load(SettingsPath).AskForScratches);
+
+        loaded.PoopNowAndThen = false;
+        SettingsStore.Save(SettingsPath, loaded);
+        Assert.False(SettingsStore.Load(SettingsPath).PoopNowAndThen);
     }
 }

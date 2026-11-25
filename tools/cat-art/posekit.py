@@ -386,6 +386,19 @@ def belly(cv, phase):
     else:   # a front-facing head just rests on the ground
         cv.head(21.5, 17.6, 'closed')
 
+
+def squat(cv, phase):
+    """Doing its business: rump low and off the ground, back hunched, tail straight up, eyes shut tight on the second frame."""
+    cv.line([(7.5, 12.5), (5.6, 9.5), (5.2, 6.0), (5.8 if phase == 0 else 4.8, 3.2)], 2.2, 1.6, 'T')
+    cv.leg([(20.2, 12.5), (20.6, 15.5), (21.0, 18)], near=False, w=2.0)
+    cv.ellipse(13.6, 13.4, 6.0, 3.4, 'B', angle=-18)
+    cv.ellipse(18.0, 13.2, 2.6, 3.4, 'C')
+    cv.ellipse(10.4, 15.0, 3.4, 2.8, 'J')
+    cv.leg([(10.5, 16), (12.5, 17.2), (13.5, 18)], w=2.0)
+    cv.leg([(18.8, 12.5), (19.0, 15.5), (19.2, 18)], w=2.2)
+    cv.line([(16.5, 11), (19.2, 9.2)], 3.6, 3.2, 'B')
+    cv.head(19.2, 9.2, 'open' if phase == 0 else 'closed')
+
 POSES = {
     'WalkA': lambda cv: walk(cv, 0), 'WalkB': lambda cv: walk(cv, 1),
     'Sit': lambda cv: sitting(cv), 'SitBlink': lambda cv: sitting(cv, eyes='closed'),
@@ -407,6 +420,7 @@ POSES = {
     'Startle': startle, 'Curl': curl,
     'RunA': lambda cv: run(cv, 0), 'RunB': lambda cv: run(cv, 1),
     'RunC': lambda cv: run(cv, 2), 'RunD': lambda cv: run(cv, 3),
+    'SquatA': lambda cv: squat(cv, 0), 'SquatB': lambda cv: squat(cv, 1),
 }
 
 # Poses where the cat is off the ground, so it can be moved down to keep its ears in the frame.

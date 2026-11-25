@@ -86,6 +86,7 @@ internal sealed class SettingsWindow : Window
         var watch = Toggle("Look at windows that open, move or flash", settings.WatchWindows, v => settings.WatchWindows = v);
         var yarn = Toggle("Play with a yarn ball", settings.PlayWithYarn, v => settings.PlayWithYarn = v);
         var ask = Toggle("Ask for belly scratches now and then", settings.AskForScratches, v => settings.AskForScratches = v);
+        var poop = Toggle("Leave a little mess now and then (click it to clean up)", settings.PoopNowAndThen, v => settings.PoopNowAndThen = v);
         var cpu = Toggle("Hurry and sweat when the PC is busy", settings.ReactToCpu, v => settings.ReactToCpu = v);
         var grumble = Toggle("Grumble when woken up", settings.GrumbleWhenWoken, v => settings.GrumbleWhenWoken = v);
         grumble.Margin = gap;
@@ -178,6 +179,7 @@ internal sealed class SettingsWindow : Window
         panel.Children.Add(watch);
         panel.Children.Add(yarn);
         panel.Children.Add(ask);
+        panel.Children.Add(poop);
         panel.Children.Add(cpu);
         panel.Children.Add(grumble);
         panel.Children.Add(breakLabel);

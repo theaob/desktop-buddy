@@ -16,6 +16,8 @@ New cats: besides the original cat, Settings offers ten more, Bean, Wisp, Puff, 
 
 Belly scratches: every so often the cat rolls onto its back and asks for belly scratches. Click it and it purrs; ignore it and it sulks for a moment. There's a Settings toggle to turn it off. See [the belly scratch test checklist](docs/belly-scratch-test-checklist.md).
 
+Little messes: every so often the cat squats and leaves a little pile on the taskbar. Click it to clean it up. It never leaves more than three; with three lying around it asks you to tidy up instead. There's a Settings toggle to turn it off. See [the little messes test checklist](docs/poop-test-checklist.md).
+
 ## Build
 
 Requires the .NET 8 SDK on Windows.
