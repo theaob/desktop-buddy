@@ -1,6 +1,6 @@
 # Little messes test checklist
 
-Goal: every so often the cat squats on the taskbar and leaves a little pile behind. Click a pile to clean it up.
+Goal: every so often the buddy (cat, dog or bird) squats on the taskbar and leaves a little pile behind. Click a pile to clean it up.
 
 Get the build the same way as before: download the `DesktopBuddy-win-x64` artifact from the pull request's latest **build** run. Exit the old version first.
 
@@ -19,4 +19,6 @@ The cat goes after 25 to 45 minutes of you using the PC (time away doesn't count
 | 9 | With an auto-hide taskbar, leave a pile and let the taskbar slide away and back | The pile stays sitting on the taskbar edge, like the cat | |
 | 10 | Start a focus timer | The cat never squats during a session | |
 | 11 | Untick the option in Settings with piles on the taskbar | They puff away, Diagnostics shows Next pile in: off, and no new ones appear | |
-| 12 | Repeat 2 to 4 with a couple of the other cats from the Cat list, facing both ways | Each has its own squat drawing, and the pile lands under its tail | |
+| 12 | Repeat 2 to 4 with a couple of the other cats and dogs from the Buddy list, facing both ways | Each has its own squat drawing, and the pile lands under its tail | |
+| 13 | Repeat 2 to 4 with a couple of birds | The bird leans forward with its tail flicked up, and leaves a small white splat instead of a pile. Its bubbles chirp ("Cheep! Cleanup, please?") | |
+| 14 | Leave a pile as a cat, then switch to a bird in Settings | The pile stays a pile until you click it | |

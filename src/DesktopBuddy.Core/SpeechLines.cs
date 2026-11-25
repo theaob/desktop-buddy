@@ -1,6 +1,6 @@
 namespace DesktopBuddy.Core;
 
-/// <summary>What a buddy says in its speech bubble, in its own voice: a cat mrrps and purrs, a dog woofs and wags.</summary>
+/// <summary>What a buddy says in its speech bubble, in its own voice: a cat mrrps and purrs, a dog woofs and wags, a bird chirps.</summary>
 public sealed record SpeechLines(string[] Woken, string[] GrabbedAwake, string[] Ask, string[] Thanks, string[] Sulk,
     string[] Cleanup, string[] Cleaned)
 {
@@ -22,5 +22,19 @@ public sealed record SpeechLines(string[] Woken, string[] GrabbedAwake, string[]
         Cleanup: new[] { "Um... the taskbar needs a scoop.", "Cleanup on the taskbar, please?", "Wasn't me! ...Okay, it was me." },
         Cleaned: new[] { "Good human!", "Wuf! Thanks!", "*proud tail wag*" });
 
-    public static SpeechLines For(Species species) => species == Species.Dog ? Dog : Cat;
+    private static readonly SpeechLines Bird = new(
+        Woken: new[] { "Cheep?!", "Hey! I was roosting.", "Five more minutes...", "Tweet. What?", "I was dreaming about sunflower seeds." },
+        GrabbedAwake: new[] { "Hey! Put me down!", "Squawk?!", "I can fly, you know!" },
+        Ask: new[] { "Head scritches?", "Scritch my head? Please?", "Chirp? Scritches?", "Fluff my feathers?" },
+        Thanks: new[] { "*happy chirping*", "Tweet! Thank you!", "Yes, right there!" },
+        Sulk: new[] { "Hmph.", "Fine. Be busy.", "*ruffles feathers*" },
+        Cleanup: new[] { "Tweet... the taskbar needs a wipe.", "Cheep! Cleanup, please?", "Not my best perch anymore." },
+        Cleaned: new[] { "Chirp! Spotless!", "Tweet! Thanks!", "*happy fluffing*" });
+
+    public static SpeechLines For(Species species) => species switch
+    {
+        Species.Dog => Dog,
+        Species.Bird => Bird,
+        _ => Cat,
+    };
 }

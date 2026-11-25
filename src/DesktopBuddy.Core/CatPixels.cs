@@ -7,7 +7,7 @@ public enum FurColor { BlueGrey, Ginger, Charcoal, Cocoa, Cream, Snow }
 public enum CatPattern { Tabby, Solid, Socks, Patches }
 
 /// <summary>
-/// Which buddy it is, picked in Settings: one of the cats or one of the dogs. The original cat takes the fur colour and pattern;
+/// Which buddy it is, picked in Settings: one of the cats, dogs or birds. The original cat takes the fur colour and pattern;
 /// the others have their own coats. <see cref="Buddies.SpeciesOf"/> says which kind of animal each one is.
 /// </summary>
 public enum CatBreed
@@ -16,10 +16,11 @@ public enum CatBreed
     BeanCartoon, WispCartoon, PuffCartoon, PebbleCartoon, SproutCartoon,
     BeanRealistic, WispRealistic, PuffRealistic, PebbleRealistic, SproutRealistic,
     Mocha, Juniper, Domino, Pip, Toast, Clover, Waffles, Hazel, Peaches,
+    Ember, Blueberry, Acorn, Sunny, Kiwi, Skye, Inky, Slate, Nugget, Rosehip,
 }
 
 /// <summary>What kind of animal a buddy is, which decides what it gets up to and what it says.</summary>
-public enum Species { Cat, Dog }
+public enum Species { Cat, Dog, Bird }
 
 public static class Buddies
 {
@@ -29,7 +30,14 @@ public static class Buddies
         CatBreed.Clover, CatBreed.Waffles, CatBreed.Hazel, CatBreed.Peaches,
     };
 
-    public static Species SpeciesOf(CatBreed breed) => Dogs.Contains(breed) ? Species.Dog : Species.Cat;
+    private static readonly HashSet<CatBreed> Birds = new()
+    {
+        CatBreed.Ember, CatBreed.Blueberry, CatBreed.Acorn, CatBreed.Sunny, CatBreed.Kiwi,
+        CatBreed.Skye, CatBreed.Inky, CatBreed.Slate, CatBreed.Nugget, CatBreed.Rosehip,
+    };
+
+    public static Species SpeciesOf(CatBreed breed) =>
+        Dogs.Contains(breed) ? Species.Dog : Birds.Contains(breed) ? Species.Bird : Species.Cat;
 }
 
 /// <summary>How the cat looks. The default is the original cat as a blue-grey tabby.</summary>
@@ -1015,6 +1023,11 @@ public static class CatPixels
             CatPose.ChewB => CatPose.Drowsy,
             CatPose.Toss => CatPose.LookUp,
             CatPose.PlayBow => CatPose.Stretch,
+            CatPose.PeckA => CatPose.CrouchA,
+            CatPose.PeckB => CatPose.CrouchB,
+            CatPose.SingA => CatPose.Yawn,
+            CatPose.SingB => CatPose.LookUp,
+            CatPose.FlapA => CatPose.Stretch,
             _ => CatPose.Sit,
         };
 

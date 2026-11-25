@@ -135,6 +135,33 @@ public class PoopTests
     }
 
     [Fact]
+    public void Birds_leave_a_splat_and_cats_and_dogs_a_pile()
+    {
+        Assert.Equal(PoopStyle.Splat, PoopPiles.StyleFor(Species.Bird));
+        Assert.Equal(PoopStyle.Pile, PoopPiles.StyleFor(Species.Cat));
+        Assert.Equal(PoopStyle.Pile, PoopPiles.StyleFor(Species.Dog));
+
+        var piles = new PoopPiles();
+        var splat = piles.Drop(10, PoopStyle.Splat)!;
+        Assert.Equal(PoopArt.Splat0, PoopPiles.Frame(splat));
+        piles.Tick(PoopPiles.StinkFrameSeconds + 0.01);
+        Assert.Equal(PoopArt.Splat1, PoopPiles.Frame(splat));
+
+        piles.Clean(splat.Id);
+        Assert.Equal(PoopArt.PoofA, PoopPiles.Frame(splat));
+    }
+
+    [Fact]
+    public void Every_kind_of_buddy_says_something_when_it_wants_or_gets_a_cleanup()
+    {
+        foreach (var species in Enum.GetValues<Species>())
+        {
+            Assert.NotEmpty(SpeechLines.For(species).Cleanup);
+            Assert.NotEmpty(SpeechLines.For(species).Cleaned);
+        }
+    }
+
+    [Fact]
     public void Keeps_at_most_three_piles()
     {
         var piles = new PoopPiles();

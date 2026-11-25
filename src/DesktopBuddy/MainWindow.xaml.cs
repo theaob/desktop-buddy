@@ -153,6 +153,7 @@ public partial class MainWindow : Window
         _engine.MouseGamesAllowed = _settings.ChaseMouse && !_focus.IsRunning;
         _engine.PlayAllowed = _settings.PlayWithYarn && !_focus.IsRunning;
         _engine.BoneAllowed = _settings.PlayWithBone && Species == Species.Dog && !_focus.IsRunning;
+        _engine.BirdAllowed = Species == Species.Bird;
         _engine.GrumbleWhenWoken = _settings.GrumbleWhenWoken;
         // Asks only when it won't talk over a reminder or another bubble.
         _engine.AskForScratchesAllowed = _settings.AskForScratches && !_focus.IsRunning
@@ -340,7 +341,8 @@ public partial class MainWindow : Window
     }
 
     // Sprite column just under the raised tail in the squat poses, counted from the buddy's back end.
-    private const int TailColumn = 8;
+    // A bird's body is shorter and sits further forward in the frame.
+    private int TailColumn => Species == Species.Bird ? 11 : 8;
 
     /// <summary>The squat is done: leave a pile just behind the cat.</summary>
     private void OnPooped()
@@ -354,7 +356,7 @@ public partial class MainWindow : Window
         var zone = WalkZone(me.Width, me.Height);
         int x = Math.Clamp(me.Left + (int)(tail - pileWidth / 2.0), zone.Left, Math.Max(zone.Left, zone.Right - pileWidth));
 
-        var pile = _poops.Drop(x);
+        var pile = _poops.Drop(x, PoopPiles.StyleFor(Species));
         if (pile is null)
             return;
         var window = new PoopWindow(pile.Id);

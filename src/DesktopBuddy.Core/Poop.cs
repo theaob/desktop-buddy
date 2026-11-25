@@ -1,5 +1,8 @@
 namespace DesktopBuddy.Core;
 
+/// <summary>What a buddy leaves behind: cats and dogs a little brown pile, birds a white splat.</summary>
+public enum PoopStyle { Pile, Splat }
+
 /// <summary>
 /// The little piles a buddy leaves on the taskbar now and then, until the user clicks them away.
 /// Nothing here is cat-specific: any buddy with squat poses can leave one. Positions are in whatever
@@ -28,11 +31,11 @@ public sealed class PoopPiles
     public bool HasRoom => Count < MaxPiles;
 
     /// <summary>Leaves a pile at <paramref name="x"/>. Returns null when there are already <see cref="MaxPiles"/>.</summary>
-    public PoopPile? Drop(double x)
+    public PoopPile? Drop(double x, PoopStyle style = PoopStyle.Pile)
     {
         if (!HasRoom)
             return null;
-        var pile = new PoopPile(++_nextId, x);
+        var pile = new PoopPile(++_nextId, x, style);
         _piles.Add(pile);
         return pile;
     }
@@ -58,16 +61,25 @@ public sealed class PoopPiles
     /// <summary>Which picture of <see cref="PoopArt"/> to show for a pile right now.</summary>
     public static int Frame(PoopPile pile) => pile.Cleaned
         ? (pile.Age < PoofSeconds / 2 ? PoopArt.PoofA : PoopArt.PoofB)
-        : (int)(pile.Age / StinkFrameSeconds) % 2 == 0 ? PoopArt.Idle0 : PoopArt.Idle1;
+        : pile.Style == PoopStyle.Splat
+            ? ((int)(pile.Age / StinkFrameSeconds) % 2 == 0 ? PoopArt.Splat0 : PoopArt.Splat1)
+            : ((int)(pile.Age / StinkFrameSeconds) % 2 == 0 ? PoopArt.Idle0 : PoopArt.Idle1);
+
+    /// <summary>What each kind of buddy leaves behind.</summary>
+    public static PoopStyle StyleFor(Species species) => species == Species.Bird ? PoopStyle.Splat : PoopStyle.Pile;
 }
 
 public sealed class PoopPile
 {
-    internal PoopPile(int id, double x)
+    internal PoopPile(int id, double x, PoopStyle style)
     {
         Id = id;
         X = x;
+        Style = style;
     }
+
+    /// <summary>A pile or a splat; it keeps its look even if the buddy is swapped for another kind.</summary>
+    public PoopStyle Style { get; }
 
     public int Id { get; }
 
@@ -83,14 +95,14 @@ public sealed class PoopPile
 
 /// <summary>
 /// The pile's pictures as 12x12 character grids: a little three-tier swirl with wavy stink lines,
-/// and a puff of dust with sparkles for when it's cleaned up. Drawn for this project.
-/// o = outline, b = brown, m = darker groove, h = highlight, w = stink line, c/e = dust puff and its edge, y = sparkle.
+/// a bird's white splat with a little glint, and a puff of dust with sparkles for when either is cleaned up.
+/// Drawn for this project. d = splat's dark middle, g = splat's outline, o = outline, b = brown, m = darker groove, h = highlight, w = stink line, c/e = dust puff and its edge, y = sparkle.
 /// </summary>
 public static class PoopArt
 {
     public const int Size = 12;
-    public const int Idle0 = 0, Idle1 = 1, PoofA = 2, PoofB = 3;
-    public const int FrameCount = 4;
+    public const int Idle0 = 0, Idle1 = 1, PoofA = 2, PoofB = 3, Splat0 = 4, Splat1 = 5;
+    public const int FrameCount = 6;
 
     public static IReadOnlyDictionary<char, uint> Palette { get; } = new Dictionary<char, uint>
     {
@@ -102,6 +114,8 @@ public static class PoopArt
         ['c'] = 0xFFF3F2F6,
         ['e'] = 0xFFC7CBD8,
         ['y'] = 0xFFF5D76E,
+        ['d'] = 0xFF5E5B68,
+        ['g'] = 0xFF8C91A1,
     };
 
     private static readonly string[][] Frames =
@@ -169,6 +183,38 @@ public static class PoopArt
             "............",
             "............",
             "............",
+        },
+        // A bird's splat, with a couple of specks beside it...
+        new[]
+        {
+            "............",
+            "............",
+            "............",
+            "............",
+            "............",
+            "............",
+            "............",
+            "......g.....",
+            ".g...gcg..g.",
+            "....gccdcg..",
+            "..ggcdddccg.",
+            ".gccccdccccg",
+        },
+        // ...that glint now and then
+        new[]
+        {
+            "............",
+            "............",
+            "............",
+            "............",
+            "............",
+            "............",
+            "............",
+            "......g.....",
+            ".y...gcg....",
+            "....gccdcg..",
+            "..ggcdddccg.",
+            ".gccccdccccg",
         },
     };
 
