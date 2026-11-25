@@ -145,6 +145,7 @@ public partial class MainWindow : Window
         _engine.WalkingAllowed = !_settings.Paused && IsHorizontalTaskbar;
         _engine.MouseGamesAllowed = _settings.ChaseMouse && !_focus.IsRunning;
         _engine.PlayAllowed = _settings.PlayWithYarn && !_focus.IsRunning;
+        _engine.BoneAllowed = _settings.PlayWithBone && Species == Species.Dog && !_focus.IsRunning;
         _engine.GrumbleWhenWoken = _settings.GrumbleWhenWoken;
         // Asks only when it won't talk over a reminder or another bubble.
         _engine.AskForScratchesAllowed = _settings.AskForScratches && !_focus.IsRunning
@@ -210,7 +211,7 @@ public partial class MainWindow : Window
         if (to == BuddyState.AskBelly)
         {
             BuddyLog.Write("Asked for belly scratches.");
-            _askMessage = Pick(AskLines);
+            _askMessage = Pick(Lines.Ask);
             _bubble?.Say(_askMessage, BehaviorEngine.AskBellySeconds);
         }
 
@@ -220,7 +221,7 @@ public partial class MainWindow : Window
         int catCenter = (me.Left + me.Right) / 2;
 
         if (_settings.GrumbleWhenWoken && from is BuddyState.Nap or BuddyState.Doze && to is BuddyState.Woken or BuddyState.Dragged)
-            Grumble(to == BuddyState.Dragged ? GrabbedAwakeLines : WokenLines);
+            Grumble(to == BuddyState.Dragged ? Lines.GrabbedAwake : Lines.Woken);
 
         switch (to)
         {
@@ -267,12 +268,10 @@ public partial class MainWindow : Window
         }
     }
 
-    private static readonly string[] WokenLines =
-    {
-        "Mrrp?!", "Hey! I was napping.", "Five more minutes...", "Rude.", "Mmf. What?", "I was having a dream about tuna.",
-    };
+    private Species Species => Buddies.SpeciesOf(_settings.Breed);
 
-    private static readonly string[] GrabbedAwakeLines = { "Hey! Put me down!", "Mrrrow?!", "Where are we going?" };
+    /// <summary>What it says, in a cat's or a dog's voice.</summary>
+    private SpeechLines Lines => SpeechLines.For(Species);
 
     /// <summary>A short line from a rudely woken cat, unless the bubble is busy with a reminder or the focus countdown.</summary>
     private void Grumble(string[] lines)
@@ -281,10 +280,6 @@ public partial class MainWindow : Window
             return;
         _bubble.Say(Pick(lines), 3);
     }
-
-    private static readonly string[] AskLines = { "Belly scratches?", "Scritches, please!", "Rub my belly? Just a little?", "Prrt? Belly?" };
-    private static readonly string[] ThanksLines = { "Purrrrr...", "Mrrp! Thank you!", "Yes, right there!" };
-    private static readonly string[] SulkLines = { "Hmph.", "Fine. Be busy.", "I didn't want scratches anyway." };
 
     private string? _askMessage;
 
@@ -300,12 +295,12 @@ public partial class MainWindow : Window
         if (scratched)
         {
             BuddyLog.Write("Got belly scratches.");
-            _bubble.Say(Pick(ThanksLines), 4);
+            _bubble.Say(Pick(Lines.Thanks), 4);
         }
         else if (sulking && (stillAsking || _bubble.Message is null))
         {
             BuddyLog.Write("Nobody scratched its belly; sulking.");
-            _bubble.Say(Pick(SulkLines), 4);
+            _bubble.Say(Pick(Lines.Sulk), 4);
         }
         else if (stillAsking)
         {
@@ -350,6 +345,7 @@ public partial class MainWindow : Window
             switch (_engine.State)
             {
                 case BuddyState.Walk:
+                case BuddyState.Carry:
                     _walkOffset += _direction * speed;
                     if (_walkOffset <= 0) { _walkOffset = 0; _direction = 1; }
                     else if (_walkOffset >= span) { _walkOffset = span; _direction = -1; }
