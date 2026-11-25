@@ -39,12 +39,13 @@ public class BirdTests
     }
 
     [Fact]
-    public void The_birds_are_birds()
+    public void The_birds_are_birds_and_nobody_else_is()
     {
-        foreach (var bird in Birds)
-            Assert.Equal(Species.Bird, Buddies.SpeciesOf(bird));
+        foreach (var breed in Enum.GetValues<CatBreed>())
+            Assert.Equal(Birds.Contains(breed), Buddies.SpeciesOf(breed) == Species.Bird);
         Assert.Equal(Species.Dog, Buddies.SpeciesOf(CatBreed.Mocha));
         Assert.Equal(Species.Cat, Buddies.SpeciesOf(CatBreed.Original));
+        Assert.Equal(Species.Cat, Buddies.SpeciesOf(CatBreed.SproutRealistic));
     }
 
     [Theory]

@@ -40,10 +40,10 @@ public class DogTests
     }
 
     [Fact]
-    public void The_dogs_are_dogs_and_everyone_else_is_a_cat()
+    public void The_dogs_are_dogs_and_nobody_else_is()
     {
         foreach (var breed in Enum.GetValues<CatBreed>())
-            Assert.Equal(Dogs.Contains(breed) ? Species.Dog : Species.Cat, Buddies.SpeciesOf(breed));
+            Assert.Equal(Dogs.Contains(breed), Buddies.SpeciesOf(breed) == Species.Dog);
     }
 
     [Theory]
