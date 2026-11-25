@@ -6,12 +6,30 @@ public enum FurColor { BlueGrey, Ginger, Charcoal, Cocoa, Cream, Snow }
 /// <summary>The cat's coat pattern, picked in Settings.</summary>
 public enum CatPattern { Tabby, Solid, Socks, Patches }
 
-/// <summary>Which cat it is, picked in Settings. The original cat takes the fur colour and pattern; the others have their own coats.</summary>
+/// <summary>
+/// Which buddy it is, picked in Settings: one of the cats or one of the dogs. The original cat takes the fur colour and pattern;
+/// the others have their own coats. <see cref="Buddies.SpeciesOf"/> says which kind of animal each one is.
+/// </summary>
 public enum CatBreed
 {
     Original,
     BeanCartoon, WispCartoon, PuffCartoon, PebbleCartoon, SproutCartoon,
     BeanRealistic, WispRealistic, PuffRealistic, PebbleRealistic, SproutRealistic,
+    Mocha, Juniper, Domino, Pip, Toast, Clover, Waffles, Hazel, Peaches,
+}
+
+/// <summary>What kind of animal a buddy is, which decides what it gets up to and what it says.</summary>
+public enum Species { Cat, Dog }
+
+public static class Buddies
+{
+    private static readonly HashSet<CatBreed> Dogs = new()
+    {
+        CatBreed.Mocha, CatBreed.Juniper, CatBreed.Domino, CatBreed.Pip, CatBreed.Toast,
+        CatBreed.Clover, CatBreed.Waffles, CatBreed.Hazel, CatBreed.Peaches,
+    };
+
+    public static Species SpeciesOf(CatBreed breed) => Dogs.Contains(breed) ? Species.Dog : Species.Cat;
 }
 
 /// <summary>How the cat looks. The default is the original cat as a blue-grey tabby.</summary>
@@ -973,11 +991,32 @@ public static class CatPixels
         },
     };
 
-    public static IReadOnlyList<string> Rows(CatPose pose) => Frames[pose];
+    public static IReadOnlyList<string> Rows(CatPose pose) => Frames[Drawn(Frames, pose)];
 
-    /// <summary>A designed cat's grid for a pose; the original cat's grids are <see cref="Rows"/>.</summary>
-    public static IReadOnlyList<string> Rows(CatBreed breed, CatPose pose) =>
-        breed == CatBreed.Original ? Frames[pose] : CatBreedArt.All[breed].Frames[pose];
+    /// <summary>A designed buddy's grid for a pose; the original cat's grids are <see cref="Rows(CatPose)"/>.</summary>
+    public static IReadOnlyList<string> Rows(CatBreed breed, CatPose pose)
+    {
+        if (breed == CatBreed.Original)
+            return Rows(pose);
+        var frames = CatBreedArt.All[breed].Frames;
+        return frames[Drawn(frames, pose)];
+    }
+
+    /// <summary>
+    /// The nearest pose a buddy has art for. Only dogs have the bone poses; a cat asked for one shows the plain pose it is
+    /// built on, so nothing ever goes blank.
+    /// </summary>
+    private static CatPose Drawn<T>(IReadOnlyDictionary<CatPose, T> frames, CatPose pose) =>
+        frames.ContainsKey(pose) ? pose : pose switch
+        {
+            CatPose.CarryA => CatPose.WalkA,
+            CatPose.CarryB => CatPose.WalkB,
+            CatPose.ChewA => CatPose.NapA,
+            CatPose.ChewB => CatPose.Drowsy,
+            CatPose.Toss => CatPose.LookUp,
+            CatPose.PlayBow => CatPose.Stretch,
+            _ => CatPose.Sit,
+        };
 
     /// <summary>A designed cat's colours; the original cat's come from <see cref="ColorsFor"/>.</summary>
     public static IReadOnlyDictionary<char, uint> BreedColors(CatBreed breed) => CatBreedArt.All[breed].Colors;
@@ -1033,6 +1072,7 @@ public static class CatPixels
             return BreedArgb(art, pose, sweaty, bubble);
 
         var colors = ColorsFor(look);
+        pose = Drawn(Frames, pose);
         var pixels = ToArgb(Frames[pose], colors, 0, 0, Width, Height);
         if (sweaty && SweatPoses.Contains(pose))
             foreach (var (x, y) in SweatDrop)
@@ -1043,6 +1083,7 @@ public static class CatPixels
 
     private static uint[] BreedArgb(BreedFrames art, CatPose pose, bool sweaty, int bubble)
     {
+        pose = Drawn(art.Frames, pose);
         var pixels = ToArgb(art.Frames[pose], art.Colors, 0, 0, Width, Height);
         if (sweaty && art.Sweat.TryGetValue(pose, out var spot))
             foreach (var (x, y) in SweatDrop)

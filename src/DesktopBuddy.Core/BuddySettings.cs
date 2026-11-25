@@ -33,6 +33,9 @@ public sealed class BuddySettings
 
     public bool PlayWithYarn { get; set; } = true;
 
+    /// <summary>Dogs play with a bone now and then: carry it about, chew it, toss it up.</summary>
+    public bool PlayWithBone { get; set; } = true;
+
     /// <summary>Now and then roll over and ask for belly scratches.</summary>
     public bool AskForScratches { get; set; } = true;
 
@@ -49,7 +52,7 @@ public sealed class BuddySettings
 
     public CatPattern Pattern { get; set; }
 
-    /// <summary>Which cat it is. Fur colour and pattern only change the original cat.</summary>
+    /// <summary>Which cat or dog it is. Fur colour and pattern only change the original cat.</summary>
     public CatBreed Breed { get; set; }
 
     /// <summary>A point on the monitor the cat was last dropped on (physical pixels), so it comes back there.</summary>
@@ -70,6 +73,7 @@ public sealed class BuddySettings
         ChaseMouse = ChaseMouse,
         WatchWindows = WatchWindows,
         PlayWithYarn = PlayWithYarn,
+        PlayWithBone = PlayWithBone,
         AskForScratches = AskForScratches,
         PoopNowAndThen = PoopNowAndThen,
         ReactToCpu = ReactToCpu,

@@ -1,11 +1,13 @@
-"""Writes src/DesktopBuddy.Core/CatBreedArt.cs: every pose of the ten designed cats as pixel grids.
+"""Writes src/DesktopBuddy.Core/CatBreedArt.cs: every pose of the ten designed cats and the nine dogs as pixel grids.
 Run from this folder: python3 export_cs.py"""
 import os
-import posekit, final, drafts
+import posekit, final, drafts, dogkit, dogs
 
 W, H = posekit.W, posekit.H
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'DesktopBuddy.Core', 'CatBreedArt.cs')
-CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-/:;<=>?@[]^_`{|}~"
+# Greek letters at the end for coats with a lot of shades (the curly poodle).
+CHARS = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-/:;<=>?@[]^_`{|}~"
+         "αβγδεζηθικλμνξοπρστυφχψωΓΔΘΛΞΠΣΦΨΩ")
 SWEAT = [(1, 0), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2), (1, 3)]   # drop shape, as in CatPixels
 # Poses that play one after another share one sweat spot, so the drop stays put while the body moves under it.
 SWEAT_GROUPS = [['WalkA', 'WalkB'], ['Sit', 'SitBlink', 'SitTail'], ['LookUp'], ['RunA', 'RunB', 'RunC', 'RunD']]
@@ -14,14 +16,18 @@ NOSE_POSES = ['SitBlink', 'NapA', 'NapB', 'Drowsy', 'Curl']
 BUBBLE = [(dx, dy) for dx in range(3) for dy in range(3)]
 FRONT_HEADS = {'bean', 'puff', 'pebble', 'sprout'}
 
-def cats():
-    """(enum name, settings label, kw for posekit, renderer) for each designed cat."""
+def buddies():
+    """(enum name, poses, canvas for a pose, renderer of a canvas) for each designed cat and dog.
+    Dogs have every cat pose plus their bone poses, and the bone is drawn over the dog."""
     for name, _, kw, coat in drafts.DRAFTS:
-        yield (f'{name}Cartoon', f'{name} (cartoon)', kw,
-               lambda g, name=name, coat=coat: drafts.render(name, drafts.fluffy(g) if name == 'Puff' else g, coat))
+        yield (f'{name}Cartoon', posekit.POSES, lambda pose, kw=kw: posekit.pose_canvas(pose, **kw),
+               lambda cv, name=name, coat=coat: drafts.render(name, drafts.fluffy(cv.g) if name == 'Puff' else cv.g, coat))
     for name, _, kind, fluff, coat in final.CATS:
-        yield (f'{name}Realistic', f'{name} (realistic)', dict(kind=kind),
-               lambda g, fluff=fluff, coat=coat: final.render(final.fluffy(g) if fluff else g, coat))
+        yield (f'{name}Realistic', posekit.POSES, lambda pose, kind=kind: posekit.pose_canvas(pose, kind),
+               lambda cv, fluff=fluff, coat=coat: final.render(final.fluffy(cv.g) if fluff else cv.g, coat))
+    for name, _, kind, head, tail, fluff, coat in dogs.DOGS:
+        yield (name, dogkit.POSES, lambda pose, a=(kind, head, tail): dogkit.pose_canvas(pose, *a),
+               lambda cv, fluff=fluff, coat=coat: dogs.draw_props(final.render(final.fluffy(cv.g) if fluff else cv.g, coat), cv.props))
 
 def clear(img, x, y, shape, margin=1):
     for dx, dy in shape:
@@ -67,18 +73,16 @@ def main():
         '    public static readonly Dictionary<CatBreed, BreedFrames> All = new()',
         '    {',
     ]
-    labels = []
-    for enum, label, kw, render in cats():
-        labels.append((enum, label))
+    for enum, poses, canvas, render in buddies():
         frames, sweat, nose, palette, drawn = {}, {}, {}, {}, {}
         icon = (0, 0)
-        for pose in posekit.POSES:
-            cv = posekit.pose_canvas(pose, **kw)
+        for pose in poses:
+            cv = canvas(pose)
             spill = {side: n for side, n in posekit.overflow(cv).items() if n}
             if pose not in posekit.AIRBORNE and spill.get('bottom') == 1:
                 del spill['bottom']   # paws resting on the taskbar edge
             assert not spill, f'{enum} {pose} is cut off at the frame edge: {spill}'
-            img = render(cv.g)
+            img = render(cv)
             rows = []
             for y in range(H):
                 row = ''
@@ -127,7 +131,7 @@ def main():
         print(f'{enum}: {len(palette)} colours, sweat {len(sweat)}/{len(SWEAT_POSES)}, nose {len(nose)}/{len(NOSE_POSES)}, icon {icon}')
         assert len(palette) <= len(CHARS)
     lines += ['    };', '}', '']
-    with open(OUT, 'w', newline='\n') as f:
+    with open(OUT, 'w', newline='\n', encoding='utf-8') as f:
         f.write('\n'.join(lines))
 
 if __name__ == '__main__':

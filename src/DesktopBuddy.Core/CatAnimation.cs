@@ -7,6 +7,8 @@ public enum CatPose
     FallA, FallB, Land, Drowsy, Stretch, Yawn,
     SitTail, GroomA, GroomB, Loaf, LoafBlink, BellyA, BellyB, Startle, Curl, RunA, RunB,
     RunC, RunD,
+    // Dogs only: playing with a bone.
+    CarryA, CarryB, ChewA, ChewB, Toss, Catch, PlayBow,
     SquatA, SquatB,  // doing its business: rump low, tail up; eyes shut tight on the second frame
 }
 
@@ -24,6 +26,11 @@ public static class CatAnimation
     private const double GroomStrokesPerSecond = 3;
     private const double RollsPerSecond = 3;
     private const double BegWigglesPerSecond = 1.5;
+    private const double ChewsPerSecond = 2.5;
+
+    // Tossing the bone: up in the air until the mark, then caught and held, over and over.
+    private const double TossEverySeconds = 1.2;
+    private const double TossUntil = 0.5;
 
     // A long nap ends up curled into a ball.
     public const double CurlAfterSeconds = 60;
@@ -91,6 +98,10 @@ public static class CatAnimation
         BuddyState.WakeUp => secondsInState < DrowsyUntil ? CatPose.Drowsy
             : secondsInState < StretchUntil ? CatPose.Stretch
             : CatPose.Yawn,
+        BuddyState.Carry => moving ? Alternate(secondsInState * StepsPerSecond, CatPose.CarryA, CatPose.CarryB) : CatPose.Catch,
+        BuddyState.Chew => Alternate(secondsInState * ChewsPerSecond, CatPose.ChewA, CatPose.ChewB),
+        BuddyState.BoneToss => secondsInState % TossEverySeconds < TossUntil ? CatPose.Toss : CatPose.Catch,
+        BuddyState.PlayBow => CatPose.PlayBow,
         BuddyState.Woken => secondsInState < WokenStartleUntil ? CatPose.Startle
             : secondsInState < WokenGlareUntil ? CatPose.Drowsy
             : CatPose.Yawn,

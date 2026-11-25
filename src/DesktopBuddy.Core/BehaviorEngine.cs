@@ -20,6 +20,11 @@ public enum BuddyState
     Woken,      // clicked awake from a nap or a doze: jumps, glares at you, then yawns
     AskBelly,   // lies on its back on its own, asking for belly scratches
     Sulk,       // nobody scratched its belly; turns its back on you for a moment
+    // Dogs only, with their bone:
+    PlayBow,    // front down, rump up, bone in mouth: come and get it
+    Carry,      // trots about with the bone in its mouth
+    Chew,       // lies down and gnaws on the bone
+    BoneToss,   // sits and tosses the bone up, catching it each time
     Squat,      // doing its business; leaves a little pile behind for you to clean up
 }
 
@@ -46,6 +51,8 @@ public sealed class BehaviorEngine
     public const double WokenSeconds = 3;
     public const double AskBellySeconds = 15;
     public const double SulkSeconds = 6;
+    public const double PlayBowSeconds = 1.4;
+    public const double BoneTossSeconds = 3.6;
     public const double SquatSeconds = 3.2;
 
     // Every so often, while the user is around, the buddy squats and leaves a little pile on the taskbar.
@@ -112,6 +119,9 @@ public sealed class BehaviorEngine
 
     public bool PlayAllowed { get; set; } = true;
 
+    /// <summary>Playing with a bone: only dogs have one, and only while bone play is on.</summary>
+    public bool BoneAllowed { get; set; }
+
     /// <summary>Clicked awake, the cat jumps and grumbles; otherwise it just wakes up slowly.</summary>
     public bool GrumbleWhenWoken { get; set; } = true;
 
@@ -147,9 +157,11 @@ public sealed class BehaviorEngine
     /// <summary>States the cat picks for itself, which napping, hunting and pausing may interrupt.</summary>
     private bool IsIdleLife => State is BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch
         or BuddyState.Look or BuddyState.Follow or BuddyState.Play or BuddyState.Doze
-        or BuddyState.Groom or BuddyState.Loaf;
+        or BuddyState.Groom or BuddyState.Loaf || IsBonePlay;
 
-    private bool IsMoving => State is BuddyState.Walk or BuddyState.Follow or BuddyState.Play;
+    private bool IsMoving => State is BuddyState.Walk or BuddyState.Follow or BuddyState.Play or BuddyState.Carry;
+
+    private bool IsBonePlay => State is BuddyState.PlayBow or BuddyState.Carry or BuddyState.Chew or BuddyState.BoneToss;
 
     public void Tick(double elapsedSeconds, double userIdleSeconds)
     {
@@ -229,7 +241,8 @@ public sealed class BehaviorEngine
 
         if ((IsMoving && !WalkingAllowed)
             || (State == BuddyState.Follow && (!MouseGamesAllowed || !CursorOnMonitor))
-            || (State == BuddyState.Play && !PlayAllowed))
+            || (State == BuddyState.Play && !PlayAllowed)
+            || (IsBonePlay && !BoneAllowed))
         {
             Enter(BuddyState.Sit);
             return;
@@ -262,10 +275,17 @@ public sealed class BehaviorEngine
             BuddyState.Scratch => TimeInState >= ScratchSeconds,
             BuddyState.Groom => TimeInState >= GroomSeconds,
             BuddyState.Look => TimeInState >= LookSeconds,
+            BuddyState.PlayBow => TimeInState >= PlayBowSeconds,
+            BuddyState.BoneToss => TimeInState >= BoneTossSeconds,
             _ => (_moodTimeLeft -= elapsedSeconds) <= 0,
         };
         if (done)
-            Enter(State == BuddyState.Sit ? PickActivity() : BuddyState.Sit);
+            Enter(State switch
+            {
+                BuddyState.Sit => PickActivity(),
+                BuddyState.PlayBow when WalkingAllowed => BuddyState.Carry,  // nobody took the bait, so off it trots with the bone
+                _ => BuddyState.Sit,
+            });
     }
 
     private bool CanHunt => CursorNear && MouseGamesAllowed && WalkingAllowed && _huntCooldown <= 0
@@ -274,6 +294,9 @@ public sealed class BehaviorEngine
     /// <summary>What a sitting cat does next.</summary>
     private BuddyState PickActivity()
     {
+        // A dog spends some of its free time with its bone.
+        if (BoneAllowed && _random.NextDouble() < BoneChance)
+            return PickBonePlay();
         double r = _random.NextDouble();
         if (!WalkingAllowed)
             return r < 0.15 ? BuddyState.Scratch : r < 0.3 ? BuddyState.Groom : r < 0.42 ? BuddyState.Doze
@@ -286,6 +309,17 @@ public sealed class BehaviorEngine
         if (r < 0.74 && PlayAllowed) return BuddyState.Play;
         if (r < 0.82 && MouseGamesAllowed && CursorOnMonitor) return BuddyState.Follow;
         return BuddyState.Sit;
+    }
+
+    /// <summary>How often a dog picks its bone over the cat things it does.</summary>
+    public const double BoneChance = 0.3;
+
+    private BuddyState PickBonePlay()
+    {
+        double r = _random.NextDouble();
+        if (r < 0.4) return BuddyState.Chew;
+        if (r < 0.7 || !WalkingAllowed) return BuddyState.BoneToss;
+        return BuddyState.PlayBow;
     }
 
     /// <summary>A click on the cat. Wakes it if it's asleep; a few in a row and it rolls over for belly rubs.</summary>
@@ -360,7 +394,7 @@ public sealed class BehaviorEngine
     public bool Notice(bool urgent = false)
     {
         if (_lookCooldown > 0 || State is not (BuddyState.Sit or BuddyState.Walk or BuddyState.Scratch or BuddyState.Follow
-            or BuddyState.Doze or BuddyState.Groom or BuddyState.Loaf))
+            or BuddyState.Doze or BuddyState.Groom or BuddyState.Loaf or BuddyState.Chew or BuddyState.Carry))
             return false;
         _lookCooldown = LookCooldownSeconds;
         Enter(urgent ? BuddyState.Startle : BuddyState.Look);
@@ -409,6 +443,8 @@ public sealed class BehaviorEngine
             BuddyState.Play => Between(10, 20),
             BuddyState.Doze => Between(8, 20),
             BuddyState.Loaf => Between(10, 25),
+            BuddyState.Carry => Between(5, 10),
+            BuddyState.Chew => Between(8, 18),
             _ => 0,
         };
         if (state == BuddyState.Nap)

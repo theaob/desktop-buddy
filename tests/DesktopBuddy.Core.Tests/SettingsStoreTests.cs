@@ -125,4 +125,16 @@ public sealed class SettingsStoreTests : IDisposable
         SettingsStore.Save(SettingsPath, loaded);
         Assert.False(SettingsStore.Load(SettingsPath).PoopNowAndThen);
     }
+
+    [Fact]
+    public void A_dog_and_its_bone_setting_are_remembered()
+    {
+        Assert.True(SettingsStore.Load(SettingsPath).PlayWithBone);
+
+        SettingsStore.Save(SettingsPath, new BuddySettings { Breed = CatBreed.Peaches, PlayWithBone = false });
+        var loaded = SettingsStore.Load(SettingsPath);
+
+        Assert.Equal(CatBreed.Peaches, loaded.Breed);
+        Assert.False(loaded.PlayWithBone);
+    }
 }
